@@ -7,14 +7,15 @@ import (
 )
 
 const (
-	_FLAG_REGEXP          = `--?[[:word:]-]+`
+	_LONG_FLAG_REGEXP          = `--[[:word:]-]+`
+	_SHORT_FLAG_REGEXP          = `-[[:alnum:]]`
 	_BOOL_OPTION_REGEXP   = `[[:word:]-]+`
 	_QUOTED_STRING_REGEXP = `'((?:\\.|[^'])+)'`
 	_VALUE_OPTION_REGEXP  = `[[:word:]-]+=` + _QUOTED_STRING_REGEXP
 )
 
 var (
-	optionRegexp = regexp.MustCompile(`^(` + strings.Join([]string{_FLAG_REGEXP, _BOOL_OPTION_REGEXP, _VALUE_OPTION_REGEXP}, "|") + `)(?:,|$)`)
+	optionRegexp = regexp.MustCompile(`^(` + strings.Join([]string{_SHORT_FLAG_REGEXP, _LONG_FLAG_REGEXP, _BOOL_OPTION_REGEXP, _VALUE_OPTION_REGEXP}, "|") + `)(?:,|$)`)
 )
 
 func parseTag(tag string) (*flag, error) {
