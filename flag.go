@@ -27,6 +27,17 @@ func (f *flag) Name() string {
 	return "<unspecified>"
 }
 
+func (f *flag) NeedsValue() bool {
+	// Explicit over implicit
+	if f.Value.Kind() == reflect.Bool {
+		return false
+	}
+	if f.Value.Kind() == reflect.Int && f.Accumulate {
+		return false
+	}
+	return true
+}
+
 type flagSet []*flag
 
 func newFlagSet(structValue reflect.Value) (flagSet, error) {
