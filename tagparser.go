@@ -17,8 +17,8 @@ var (
 	optionRegexp = regexp.MustCompile(`^(` + strings.Join([]string{_FLAG_REGEXP, _BOOL_OPTION_REGEXP, _VALUE_OPTION_REGEXP}, "|") + `)(?:,|$)`)
 )
 
-func parseTag(tag string) (*Flag, error) {
-	f := &Flag{
+func parseTag(tag string) (*flag, error) {
+	f := &flag{
 		Short: make([]string, 0),
 		Long:  make([]string, 0),
 	}
@@ -46,8 +46,8 @@ func parseTag(tag string) (*Flag, error) {
 			switch option {
 			case "accumulate":
 				f.Accumulate = true
-			case "non-zero":
-				f.NonZero = true
+			case "obligatory":
+				f.Obligatory = true
 			default:
 				return nil, fmt.Errorf("Unknown option %s", option)
 			}

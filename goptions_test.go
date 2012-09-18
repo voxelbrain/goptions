@@ -4,58 +4,110 @@ import (
 	"testing"
 )
 
-func TestSimpleStruct(t *testing.T) {
+func TestParse_StringValue(t *testing.T) {
 	var args []string
 	var err error
 	var options struct {
-		Force     bool   `goptions:"--force, -f, description='Force action'"`
-		Verbosity int    `goptions:"--verbose, -v, description='Level of verbosity, accumulate'"`
-		Name      string `goptions:"--name, -n, description='Some name', non-zero"`
+		Name string `goptions:"--name, -n"`
+	}
+	expected := "SomeName"
+
+	args = []string{"--name", "SomeName"}
+	err = Parse(args, &options)
+	if err != nil {
+		t.Fatalf("flag parsing failed: %s", err)
+	}
+	if options.Name != expected {
+		t.Fatalf("Expected %s for options.Name, got %s", expected, options.Name)
+	}
+
+	options.Name = ""
+
+	args = []string{"-n", "SomeName"}
+	err = Parse(args, &options)
+	if err != nil {
+		t.Fatalf("flag parsing failed: %s", err)
+	}
+	if options.Name != expected {
+		t.Fatalf("Expected %s for options.Name, got %s", expected, options.Name)
+	}
+}
+
+func TestParse_ObligatoryStringValue(t *testing.T) {
+	var args []string
+	var err error
+	var options struct {
+		Name string `goptions:"--name, -n, description='Some name', obligatory"`
 	}
 	args = []string{}
 	err = Parse(args, &options)
-	_ = err
+	if err == nil {
+		t.Fatalf("Parsing should have failed.")
+	}
+
+	args = []string{"-n", "SomeName"}
+	err = Parse(args, &options)
+	if err != nil {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+
+	expected := "SomeName"
+	if options.Name != expected {
+		t.Fatalf("Expected %s for options.Name, got %s", expected, options.Name)
+	}
 }
 
-func TestParseTag1(t *testing.T) {
+func TestParse_UnknownFlag(t *testing.T) {
+	var args []string
+	var err error
+	var options struct {
+		Name string `goptions:"--name, -n"`
+	}
+	args = []string{"-k", "4"}
+	err = Parse(args, &options)
+	if err == nil {
+		t.Fatalf("Parsing should have failed.")
+	}
+}
+
+func TestParseTag_minimal(t *testing.T) {
 	var tag string
-	tag = `--name, -n, description='Some name', mutexgroup='selector', non-zero`
+	tag = `--name, -n, description='Some name'`
 	f, e := parseTag(tag)
 	if e != nil {
 		t.Fatalf("Tag parsing failed: %s", e)
 	}
-	expected := &Flag{
+	expected := &flag{
+		Long:        []string{"name"},
+		Short:       []string{"n"},
+		Description: "Some name",
+	}
+	if !flagEqual(f, expected) {
+		t.Fatalf("Expected %#v, got %#v", expected, f)
+	}
+}
+
+func TestParseTag_more(t *testing.T) {
+	var tag string
+	tag = `--name, -n, description='Some name', mutexgroup='selector', obligatory`
+	f, e := parseTag(tag)
+	if e != nil {
+		t.Fatalf("Tag parsing failed: %s", e)
+	}
+	expected := &flag{
 		Long:        []string{"name"},
 		Short:       []string{"n"},
 		Accumulate:  false,
 		Description: "Some name",
 		MutexGroup:  "selector",
-		NonZero:     true,
+		Obligatory:  true,
 	}
 	if !flagEqual(f, expected) {
 		t.Fatalf("Expected %#v, got %#v", expected, f)
 	}
 }
 
-func TestParseTag2(t *testing.T) {
-	var tag string
-	tag = `--verbose, -v, description='Increase verbosity', accumulate`
-	f, e := parseTag(tag)
-	if e != nil {
-		t.Fatalf("Tag parsing failed: %s", e)
-	}
-	expected := &Flag{
-		Long:        []string{"verbose"},
-		Short:       []string{"v"},
-		Accumulate:  true,
-		Description: "Increase verbosity",
-	}
-	if !flagEqual(f, expected) {
-		t.Fatalf("Expected %#v, got %#v", expected, f)
-	}
-}
-
-func flagEqual(f1, f2 *Flag) bool {
+func flagEqual(f1, f2 *flag) bool {
 	if !stringArrayEqual(f1.Long, f2.Long) {
 		return false
 	}
@@ -69,6 +121,9 @@ func flagEqual(f1, f2 *Flag) bool {
 		return false
 	}
 	if f1.Description != f2.Description {
+		return false
+	}
+	if f1.Obligatory != f2.Obligatory {
 		return false
 	}
 	return true

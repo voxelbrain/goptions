@@ -3,47 +3,56 @@ package goptions
 import (
 	"fmt"
 	"reflect"
+	"strings"
 )
 
-type Verbs map[string]interface{}
+// type Verbs map[string]interface{}
+
+// Catches remaining strings after parsing has finished
+type Remainder []string
 
 func Parse(args []string, v interface{}) error {
-	value := reflect.ValueOf(v)
-	if value.Kind() != reflect.Ptr {
+	structValue := reflect.ValueOf(v)
+	if structValue.Kind() != reflect.Ptr {
 		panic("Value type is not a pointer to a struct")
 	}
-	value = value.Elem()
-	if value.Kind() != reflect.Struct {
+	structValue = structValue.Elem()
+	if structValue.Kind() != reflect.Struct {
 		panic("Value type is not a pointer to a struct")
 	}
 
-	flags := parseFields(value)
-	_ = flags
-	return nil
-}
+	fs, err := newFlagSet(structValue)
+	if err != nil {
+		return err
+	}
 
-type Flag struct {
-	Value       reflect.Value
-	Short       []string
-	Long        []string
-	MutexGroup  string
-	Accumulate  bool
-	Description string
-	NonZero     bool
-}
+	e := fs.Parse(args)
+	if e != nil {
+		return e
+	}
 
-func parseFields(value reflect.Value) []*Flag {
-	r := make([]*Flag, 0)
-	for i := 0; i < value.Type().NumField(); i++ {
-		tag := value.Type().Field(i).Tag.Get("goptions")
-		value := value.Field(i)
-		flag, e := parseTag(tag)
-		if e != nil {
-			panic(fmt.Sprintf("Invalid tagline: %s", e))
+	// Check for unset, obligatory flags
+	for _, f := range fs {
+		if f.Obligatory && !f.WasSpecified {
+			return fmt.Errorf("%s must be specified", f.Name())
 		}
-		flag.Value = value
-		r = append(r, flag)
-
 	}
-	return r
+
+	// Check for multiple set flags in one mutex group
+	mgs := fs.MutexGroups()
+	for _, mg := range mgs {
+		wasSpecifiedCount := 0
+		names := make([]string, 0)
+		for _, flag := range mg {
+			names = append(names, flag.Name())
+			if flag.WasSpecified {
+				wasSpecifiedCount += 1
+			}
+		}
+		if wasSpecifiedCount >= 2 {
+			return fmt.Errorf("Only one of %s can be specified", strings.Join(names, ","))
+		}
+	}
+
+	return nil
 }
