@@ -78,6 +78,7 @@ func newFlagSet(structValue reflect.Value) (*flagSet, error) {
 		r.flags = append(r.flags, flag)
 
 	}
+	r.shortMap, r.longMap = r.shortFlagMap(), r.longFlagMap()
 	return r, nil
 }
 
@@ -117,7 +118,6 @@ func (fs *flagSet) MutexGroups() map[string][]*flag {
 }
 
 func (fs *flagSet) Parse(args []string) error {
-	fs.shortMap, fs.longMap = fs.shortFlagMap(), fs.longFlagMap()
 
 	for len(args) > 0 {
 		flags, restArgs, err := fs.parseNextItem(args)
@@ -164,7 +164,7 @@ func (fs *flagSet) parseShortFlagCluster(args []string) ([]*flag, []string, erro
 	for idx, shortflagname := range shortflagnames {
 		flag, ok := fs.shortMap[string(shortflagname)]
 		if !ok {
-			return nil, args, fmt.Errorf("Unknown flag -%s", shortflagname)
+			return nil, args, fmt.Errorf("Unknown flag -%s", string(shortflagname))
 		}
 		flag.Set()
 		// If value-flag is given but is not the last in a short flag cluster,
