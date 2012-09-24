@@ -37,18 +37,18 @@ func TestParse_ObligatoryStringValue(t *testing.T) {
 	var args []string
 	var err error
 	var options struct {
-		Name string `goptions:"--name, -n, description='Some name', obligatory"`
+		Name string `goptions:"-n, obligatory"`
 	}
 	args = []string{}
 	err = Parse(args, &options)
 	if err == nil {
-		t.Fatalf("Parsing should have failed.")
+		t.Fatalf("parsing should have failed.")
 	}
 
 	args = []string{"-n", "SomeName"}
 	err = Parse(args, &options)
 	if err != nil {
-		t.Fatalf("Parsing failed: %s", err)
+		t.Fatalf("parsing failed: %s", err)
 	}
 
 	expected := "SomeName"
@@ -67,6 +67,31 @@ func TestParse_UnknownFlag(t *testing.T) {
 	err = Parse(args, &options)
 	if err == nil {
 		t.Fatalf("Parsing should have failed.")
+	}
+}
+
+func TestParse_FlagCluster(t *testing.T) {
+	var args []string
+	var err error
+	var options struct {
+		Fast    bool `goptions:"-f"`
+		Silent  bool `goptions:"-q"`
+		Serious bool `goptions:"-s"`
+		Crazy   bool `goptions:"-c"`
+		Verbose int  `goptions:"-v, accumulate"`
+	}
+	args = []string{"-fqcvvv"}
+	err = Parse(args, &options)
+	if err != nil {
+		t.Fatalf("parsing failed: %s", err)
+	}
+
+	if !(options.Fast &&
+		options.Silent &&
+		!options.Serious &&
+		options.Crazy &&
+		options.Verbose == 3) {
+		t.Fatalf("Unexpected value: %v", options)
 	}
 }
 

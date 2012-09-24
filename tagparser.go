@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	_LONG_FLAG_REGEXP          = `--[[:word:]-]+`
-	_SHORT_FLAG_REGEXP          = `-[[:alnum:]]`
+	_LONG_FLAG_REGEXP     = `--[[:word:]-]+`
+	_SHORT_FLAG_REGEXP    = `-[[:alnum:]]`
 	_BOOL_OPTION_REGEXP   = `[[:word:]-]+`
 	_QUOTED_STRING_REGEXP = `'((?:\\.|[^'])+)'`
 	_VALUE_OPTION_REGEXP  = `[[:word:]-]+=` + _QUOTED_STRING_REGEXP
