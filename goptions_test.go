@@ -15,7 +15,7 @@ func TestParse_StringValue(t *testing.T) {
 	args = []string{"--name", "SomeName"}
 	err = Parse(args, &options)
 	if err != nil {
-		t.Fatalf("flag parsing failed: %s", err)
+		t.Fatalf("Flag parsing failed: %s", err)
 	}
 	if options.Name != expected {
 		t.Fatalf("Expected %s for options.Name, got %s", expected, options.Name)
@@ -26,7 +26,7 @@ func TestParse_StringValue(t *testing.T) {
 	args = []string{"-n", "SomeName"}
 	err = Parse(args, &options)
 	if err != nil {
-		t.Fatalf("flag parsing failed: %s", err)
+		t.Fatalf("Flag parsing failed: %s", err)
 	}
 	if options.Name != expected {
 		t.Fatalf("Expected %s for options.Name, got %s", expected, options.Name)
@@ -42,13 +42,13 @@ func TestParse_ObligatoryStringValue(t *testing.T) {
 	args = []string{}
 	err = Parse(args, &options)
 	if err == nil {
-		t.Fatalf("parsing should have failed.")
+		t.Fatalf("Parsing should have failed.")
 	}
 
 	args = []string{"-n", "SomeName"}
 	err = Parse(args, &options)
 	if err != nil {
-		t.Fatalf("parsing failed: %s", err)
+		t.Fatalf("Parsing failed: %s", err)
 	}
 
 	expected := "SomeName"
@@ -92,6 +92,20 @@ func TestParse_FlagCluster(t *testing.T) {
 		options.Crazy &&
 		options.Verbose == 3) {
 		t.Fatalf("Unexpected value: %v", options)
+	}
+}
+
+func TestParse_MutexGroup(t *testing.T) {
+	var args []string
+	var err error
+	var options struct {
+		Create bool `goptions:"--create, mutexgroup='action'"`
+		Delete bool `goptions:"--delete, mutexgroup='action'"`
+	}
+	args = []string{"--create", "--delete"}
+	err = Parse(args, &options)
+	if err == nil {
+		t.Fatalf("Parsing should have failed.")
 	}
 }
 
