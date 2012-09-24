@@ -32,7 +32,7 @@ func Parse(args []string, v interface{}) error {
 	}
 
 	// Check for unset, obligatory flags
-	for _, f := range fs {
+	for _, f := range fs.flags {
 		if f.Obligatory && !f.WasSpecified {
 			return fmt.Errorf("%s must be specified", f.Name())
 		}
