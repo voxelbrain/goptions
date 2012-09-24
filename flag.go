@@ -1,6 +1,7 @@
 package goptions
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -50,6 +51,10 @@ func (f *flag) Set() {
 func (f *flag) SetValue(v interface{}) (err error) {
 	defer func() {
 		if x := recover(); x != nil {
+			if str, ok := x.(string); ok {
+				err = errors.New(str)
+				return
+			}
 			err = x.(error)
 		}
 	}()
