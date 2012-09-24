@@ -67,15 +67,23 @@ type flagSet struct {
 	shortMap map[string]*flag
 	longMap  map[string]*flag
 	flags    []*flag
+	verbs    map[string]*flagSet
 }
 
 func newFlagSet(structValue reflect.Value) (*flagSet, error) {
 	r := &flagSet{
 		flags: make([]*flag, 0),
+		verbs: make(map[string]*flagSet),
 	}
-	for i := 0; i < structValue.Type().NumField(); i++ {
+
+	var i int
+	// Parse Option fields
+	for i = 0; i < structValue.Type().NumField(); i++ {
 		tag := structValue.Type().Field(i).Tag.Get("goptions")
 		fieldValue := structValue.Field(i)
+		if fieldValue.Type().Name() == "Verbs" {
+			break
+		}
 		flag, err := parseTag(tag)
 		if err != nil {
 			return nil, fmt.Errorf("Invalid tagline: %s", err)
@@ -88,9 +96,19 @@ func newFlagSet(structValue reflect.Value) (*flagSet, error) {
 		}
 
 		r.flags = append(r.flags, flag)
-
 	}
 	r.shortMap, r.longMap = r.shortFlagMap(), r.longFlagMap()
+
+	// Parse verb fields
+	for i++; i < structValue.Type().NumField(); i++ {
+		fieldValue := structValue.Field(i)
+		fs, err := newFlagSet(fieldValue)
+		if err != nil {
+			return nil, fmt.Errorf("Invalid verb: %s", err)
+		}
+		r.verbs[strings.ToLower(structValue.Type().Field(i).Name)] = fs
+	}
+
 	return r, nil
 }
 
@@ -130,7 +148,6 @@ func (fs *flagSet) MutexGroups() map[string][]*flag {
 }
 
 func (fs *flagSet) Parse(args []string) error {
-
 	for len(args) > 0 {
 		flags, restArgs, err := fs.parseNextItem(args)
 		if err != nil {
@@ -147,6 +164,16 @@ func (fs *flagSet) parseNextItem(args []string) ([]*flag, []string, error) {
 		return fs.parseLongFlag(args)
 	} else if strings.HasPrefix(args[0], "-") {
 		return fs.parseShortFlagCluster(args)
+	} else {
+		verb, ok := fs.verbs[args[0]]
+		if !ok {
+			return nil, args, fmt.Errorf("Unknown verb: %s", args[0])
+		}
+		err := verb.Parse(args[1:])
+		if err != nil {
+			return nil, args, err
+		}
+		return []*flag{}, []string{}, nil
 	}
 	panic("Invalid execution path")
 }
