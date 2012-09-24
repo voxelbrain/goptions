@@ -1,6 +1,7 @@
 package goptions
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -50,6 +51,10 @@ func (f *flag) Set() {
 func (f *flag) SetValue(v interface{}) (err error) {
 	defer func() {
 		if x := recover(); x != nil {
+			if str, ok := x.(string); ok {
+				err = errors.New(str)
+				return
+			}
 			err = x.(error)
 		}
 	}()
@@ -58,6 +63,7 @@ func (f *flag) SetValue(v interface{}) (err error) {
 }
 
 type flagSet struct {
+	helpFlag *flag
 	shortMap map[string]*flag
 	longMap  map[string]*flag
 	flags    []*flag
@@ -75,6 +81,12 @@ func newFlagSet(structValue reflect.Value) (*flagSet, error) {
 			return nil, fmt.Errorf("Invalid tagline: %s", err)
 		}
 		flag.Value = fieldValue
+
+		switch flag.Value.Interface().(type) {
+		case Help:
+			r.helpFlag = flag
+		}
+
 		r.flags = append(r.flags, flag)
 
 	}

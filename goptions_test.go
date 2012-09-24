@@ -95,6 +95,26 @@ func TestParse_FlagCluster(t *testing.T) {
 	}
 }
 
+func TestParse_HelpFlag(t *testing.T) {
+	var args []string
+	var err error
+	var options struct {
+		Name string `goptions:"--name, -n"`
+		Help `goptions:"--help, -h"`
+	}
+	args = []string{"-n", "SomeNone", "-h"}
+	err = Parse(args, &options)
+	if err != ErrHelpRequest {
+		t.Fatalf("Expected ErrHelpRequest, got: %s", err)
+	}
+
+	args = []string{"-n", "SomeNone"}
+	err = Parse(args, &options)
+	if err != nil {
+		t.Fatalf("Unexpected error returned: %s", err)
+	}
+}
+
 func TestParseTag_minimal(t *testing.T) {
 	var tag string
 	tag = `--name, -n, description='Some name'`

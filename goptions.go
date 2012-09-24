@@ -1,12 +1,16 @@
 package goptions
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 )
 
 // type Verbs map[string]interface{}
+var (
+	ErrHelpRequest = errors.New("Request for Help")
+)
 
 // Catches remaining strings after parsing has finished
 type Remainder []string
@@ -29,6 +33,10 @@ func Parse(args []string, v interface{}) error {
 	e := fs.Parse(args)
 	if e != nil {
 		return e
+	}
+
+	if fs.helpFlag != nil && fs.helpFlag.WasSpecified {
+		return ErrHelpRequest
 	}
 
 	// Check for unset, obligatory flags
