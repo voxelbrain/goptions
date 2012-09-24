@@ -58,6 +58,7 @@ func (f *flag) SetValue(v interface{}) (err error) {
 }
 
 type flagSet struct {
+	helpFlag *flag
 	shortMap map[string]*flag
 	longMap  map[string]*flag
 	flags    []*flag
@@ -75,6 +76,12 @@ func newFlagSet(structValue reflect.Value) (*flagSet, error) {
 			return nil, fmt.Errorf("Invalid tagline: %s", err)
 		}
 		flag.Value = fieldValue
+
+		switch flag.Value.Interface().(type) {
+		case Help:
+			r.helpFlag = flag
+		}
+
 		r.flags = append(r.flags, flag)
 
 	}
