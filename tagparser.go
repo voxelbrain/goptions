@@ -18,8 +18,8 @@ var (
 	optionRegexp = regexp.MustCompile(`^(` + strings.Join([]string{_SHORT_FLAG_REGEXP, _LONG_FLAG_REGEXP, _BOOL_OPTION_REGEXP, _VALUE_OPTION_REGEXP}, "|") + `)(?:,|$)`)
 )
 
-func parseTag(tag string) (*flag, error) {
-	f := &flag{
+func parseTag(tag string) (*Flag, error) {
+	f := &Flag{
 		Short: make([]string, 0),
 		Long:  make([]string, 0),
 	}

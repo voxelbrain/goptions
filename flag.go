@@ -5,8 +5,7 @@ import (
 	"reflect"
 )
 
-type flag struct {
-	Value        reflect.Value
+type Flag struct {
 	Short        []string
 	Long         []string
 	MutexGroup   string
@@ -14,9 +13,10 @@ type flag struct {
 	Description  string
 	Obligatory   bool
 	WasSpecified bool
+	value        reflect.Value
 }
 
-func (f *flag) Name() string {
+func (f *Flag) Name() string {
 	if len(f.Long) > 0 {
 		return "--" + f.Long[0]
 	}
@@ -26,27 +26,27 @@ func (f *flag) Name() string {
 	return "<unspecified>"
 }
 
-func (f *flag) NeedsExtraValue() bool {
+func (f *Flag) NeedsExtraValue() bool {
 	// Explicit over implicit
-	if f.Value.Kind() == reflect.Bool {
+	if f.value.Kind() == reflect.Bool {
 		return false
 	}
-	if f.Value.Kind() == reflect.Int && f.Accumulate {
+	if f.value.Kind() == reflect.Int && f.Accumulate {
 		return false
 	}
 	return true
 }
 
-func (f *flag) Set() {
+func (f *Flag) Set() {
 	f.WasSpecified = true
-	if f.Value.Kind() == reflect.Bool {
+	if f.value.Kind() == reflect.Bool {
 		f.SetValue(true)
-	} else if f.Value.Kind() == reflect.Int && f.Accumulate {
-		f.SetValue(f.Value.Interface().(int) + 1)
+	} else if f.value.Kind() == reflect.Int && f.Accumulate {
+		f.SetValue(f.value.Interface().(int) + 1)
 	}
 }
 
-func (f *flag) SetValue(v interface{}) (err error) {
+func (f *Flag) SetValue(v interface{}) (err error) {
 	defer func() {
 		if x := recover(); x != nil {
 			if str, ok := x.(string); ok {
@@ -56,6 +56,6 @@ func (f *flag) SetValue(v interface{}) (err error) {
 			err = x.(error)
 		}
 	}()
-	f.Value.Set(reflect.ValueOf(v))
+	f.value.Set(reflect.ValueOf(v))
 	return
 }

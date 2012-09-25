@@ -208,7 +208,7 @@ func TestParseTag_minimal(t *testing.T) {
 	if e != nil {
 		t.Fatalf("Tag parsing failed: %s", e)
 	}
-	expected := &flag{
+	expected := &Flag{
 		Long:        []string{"name"},
 		Short:       []string{"n"},
 		Description: "Some name",
@@ -225,7 +225,7 @@ func TestParseTag_more(t *testing.T) {
 	if e != nil {
 		t.Fatalf("Tag parsing failed: %s", e)
 	}
-	expected := &flag{
+	expected := &Flag{
 		Long:        []string{"name"},
 		Short:       []string{"n"},
 		Accumulate:  false,

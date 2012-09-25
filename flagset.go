@@ -3,16 +3,20 @@ package goptions
 import (
 	"errors"
 	"fmt"
+	"io"
 	"reflect"
 	"strings"
 )
 
+type HelpFunc func(w io.Writer, fs *FlagSet)
+
 type FlagSet struct {
-	helpFlag *flag
-	shortMap map[string]*flag
-	longMap  map[string]*flag
-	flags    []*flag
-	verbs    map[string]*FlagSet
+	HelpFunc
+	helpFlag *Flag
+	shortMap map[string]*Flag
+	longMap  map[string]*Flag
+	Flags    []*Flag
+	Verbs    map[string]*FlagSet
 }
 
 func NewFlagSet(v interface{}) (*FlagSet, error) {
@@ -31,8 +35,9 @@ func NewFlagSet(v interface{}) (*FlagSet, error) {
 // Can't obtain a pointer to a struct field using reflect.
 func newFlagSet(structValue reflect.Value) (*FlagSet, error) {
 	r := &FlagSet{
-		flags: make([]*flag, 0),
-		verbs: make(map[string]*FlagSet),
+		Flags:    make([]*Flag, 0),
+		Verbs:    make(map[string]*FlagSet),
+		HelpFunc: DefaultHelpFunc,
 	}
 
 	var i int
@@ -47,14 +52,14 @@ func newFlagSet(structValue reflect.Value) (*FlagSet, error) {
 		if err != nil {
 			return nil, fmt.Errorf("Invalid tagline: %s", err)
 		}
-		flag.Value = fieldValue
+		flag.value = fieldValue
 
-		switch flag.Value.Interface().(type) {
+		switch flag.value.Interface().(type) {
 		case Help:
 			r.helpFlag = flag
 		}
 
-		r.flags = append(r.flags, flag)
+		r.Flags = append(r.Flags, flag)
 	}
 	r.shortMap, r.longMap = r.shortFlagMap(), r.longFlagMap()
 
@@ -66,15 +71,15 @@ func newFlagSet(structValue reflect.Value) (*FlagSet, error) {
 		if err != nil {
 			return nil, fmt.Errorf("Invalid verb: %s", err)
 		}
-		r.verbs[tag] = fs
+		r.Verbs[tag] = fs
 	}
 
 	return r, nil
 }
 
-func (fs *FlagSet) shortFlagMap() map[string]*flag {
-	r := make(map[string]*flag)
-	for _, flag := range fs.flags {
+func (fs *FlagSet) shortFlagMap() map[string]*Flag {
+	r := make(map[string]*Flag)
+	for _, flag := range fs.Flags {
 		for _, short := range flag.Short {
 			r[short] = flag
 		}
@@ -82,9 +87,9 @@ func (fs *FlagSet) shortFlagMap() map[string]*flag {
 	return r
 }
 
-func (fs *FlagSet) longFlagMap() map[string]*flag {
-	r := make(map[string]*flag)
-	for _, flag := range fs.flags {
+func (fs *FlagSet) longFlagMap() map[string]*Flag {
+	r := make(map[string]*Flag)
+	for _, flag := range fs.Flags {
 		for _, long := range flag.Long {
 			r[long] = flag
 		}
@@ -92,15 +97,15 @@ func (fs *FlagSet) longFlagMap() map[string]*flag {
 	return r
 }
 
-func (fs *FlagSet) MutexGroups() map[string][]*flag {
-	r := make(map[string][]*flag)
-	for _, f := range fs.flags {
+func (fs *FlagSet) MutexGroups() map[string][]*Flag {
+	r := make(map[string][]*Flag)
+	for _, f := range fs.Flags {
 		mg := f.MutexGroup
 		if len(mg) == 0 {
 			continue
 		}
 		if _, ok := r[mg]; !ok {
-			r[mg] = make([]*flag, 0)
+			r[mg] = make([]*Flag, 0)
 		}
 		r[mg] = append(r[mg], f)
 	}
@@ -113,11 +118,11 @@ var (
 
 func (fs *FlagSet) Parse(args []string) error {
 	for len(args) > 0 {
-		flags, restArgs, err := fs.parseNextItem(args)
+		Flags, restArgs, err := fs.parseNextItem(args)
 		if err != nil {
 			return err
 		}
-		fs.flags = append(fs.flags, flags...)
+		fs.Flags = append(fs.Flags, Flags...)
 		args = restArgs
 	}
 
@@ -125,14 +130,14 @@ func (fs *FlagSet) Parse(args []string) error {
 		return ErrHelpRequest
 	}
 
-	// Check for unset, obligatory flags
-	for _, f := range fs.flags {
+	// Check for unset, obligatory Flags
+	for _, f := range fs.Flags {
 		if f.Obligatory && !f.WasSpecified {
 			return fmt.Errorf("%s must be specified", f.Name())
 		}
 	}
 
-	// Check for multiple set flags in one mutex group
+	// Check for multiple set Flags in one mutex group
 	mgs := fs.MutexGroups()
 	for _, mg := range mgs {
 		wasSpecifiedCount := 0
@@ -150,13 +155,13 @@ func (fs *FlagSet) Parse(args []string) error {
 	return nil
 }
 
-func (fs *FlagSet) parseNextItem(args []string) ([]*flag, []string, error) {
+func (fs *FlagSet) parseNextItem(args []string) ([]*Flag, []string, error) {
 	if strings.HasPrefix(args[0], "--") {
 		return fs.parseLongFlag(args)
 	} else if strings.HasPrefix(args[0], "-") {
 		return fs.parseShortFlagCluster(args)
 	} else {
-		verb, ok := fs.verbs[args[0]]
+		verb, ok := fs.Verbs[args[0]]
 		if !ok {
 			return nil, args, fmt.Errorf("Unknown verb: %s", args[0])
 		}
@@ -164,12 +169,12 @@ func (fs *FlagSet) parseNextItem(args []string) ([]*flag, []string, error) {
 		if err != nil {
 			return nil, args, err
 		}
-		return []*flag{}, []string{}, nil
+		return []*Flag{}, []string{}, nil
 	}
 	panic("Invalid execution path")
 }
 
-func (fs *FlagSet) parseLongFlag(args []string) ([]*flag, []string, error) {
+func (fs *FlagSet) parseLongFlag(args []string) ([]*Flag, []string, error) {
 	longflagname := args[0][2:]
 	f, ok := fs.longMap[longflagname]
 	if !ok {
@@ -184,13 +189,13 @@ func (fs *FlagSet) parseLongFlag(args []string) ([]*flag, []string, error) {
 		}
 		args = args[1:]
 	}
-	return []*flag{f}, args, nil
+	return []*Flag{f}, args, nil
 }
 
-func (fs *FlagSet) parseShortFlagCluster(args []string) ([]*flag, []string, error) {
+func (fs *FlagSet) parseShortFlagCluster(args []string) ([]*Flag, []string, error) {
 	shortflagnames := args[0][1:]
 	args = args[1:]
-	r := make([]*flag, 0, len(shortflagnames))
+	r := make([]*Flag, 0, len(shortflagnames))
 	for idx, shortflagname := range shortflagnames {
 		flag, ok := fs.shortMap[string(shortflagname)]
 		if !ok {
@@ -211,4 +216,8 @@ func (fs *FlagSet) parseShortFlagCluster(args []string) ([]*flag, []string, erro
 		r = append(r, flag)
 	}
 	return r, args, nil
+}
+
+func (fs *FlagSet) PrintHelp(w io.Writer) {
+	fs.HelpFunc(w, fs)
 }
