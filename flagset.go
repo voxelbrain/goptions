@@ -1,23 +1,38 @@
 package goptions
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 )
 
-type flagSet struct {
+type FlagSet struct {
 	helpFlag *flag
 	shortMap map[string]*flag
 	longMap  map[string]*flag
 	flags    []*flag
-	verbs    map[string]*flagSet
+	verbs    map[string]*FlagSet
 }
 
-func newFlagSet(structValue reflect.Value) (*flagSet, error) {
-	r := &flagSet{
+func NewFlagSet(v interface{}) (*FlagSet, error) {
+	structValue := reflect.ValueOf(v)
+	if structValue.Kind() != reflect.Ptr {
+		panic("Value type is not a pointer to a struct")
+	}
+	structValue = structValue.Elem()
+	if structValue.Kind() != reflect.Struct {
+		panic("Value type is not a pointer to a struct")
+	}
+	return newFlagSet(structValue)
+}
+
+// Internal version which skips type checking.
+// Can't obtain a pointer to a struct field using reflect.
+func newFlagSet(structValue reflect.Value) (*FlagSet, error) {
+	r := &FlagSet{
 		flags: make([]*flag, 0),
-		verbs: make(map[string]*flagSet),
+		verbs: make(map[string]*FlagSet),
 	}
 
 	var i int
@@ -57,7 +72,7 @@ func newFlagSet(structValue reflect.Value) (*flagSet, error) {
 	return r, nil
 }
 
-func (fs *flagSet) shortFlagMap() map[string]*flag {
+func (fs *FlagSet) shortFlagMap() map[string]*flag {
 	r := make(map[string]*flag)
 	for _, flag := range fs.flags {
 		for _, short := range flag.Short {
@@ -67,7 +82,7 @@ func (fs *flagSet) shortFlagMap() map[string]*flag {
 	return r
 }
 
-func (fs *flagSet) longFlagMap() map[string]*flag {
+func (fs *FlagSet) longFlagMap() map[string]*flag {
 	r := make(map[string]*flag)
 	for _, flag := range fs.flags {
 		for _, long := range flag.Long {
@@ -77,7 +92,7 @@ func (fs *flagSet) longFlagMap() map[string]*flag {
 	return r
 }
 
-func (fs *flagSet) MutexGroups() map[string][]*flag {
+func (fs *FlagSet) MutexGroups() map[string][]*flag {
 	r := make(map[string][]*flag)
 	for _, f := range fs.flags {
 		mg := f.MutexGroup
@@ -92,7 +107,11 @@ func (fs *flagSet) MutexGroups() map[string][]*flag {
 	return r
 }
 
-func (fs *flagSet) Parse(args []string) error {
+var (
+	ErrHelpRequest = errors.New("Request for Help")
+)
+
+func (fs *FlagSet) Parse(args []string) error {
 	for len(args) > 0 {
 		flags, restArgs, err := fs.parseNextItem(args)
 		if err != nil {
@@ -101,10 +120,37 @@ func (fs *flagSet) Parse(args []string) error {
 		fs.flags = append(fs.flags, flags...)
 		args = restArgs
 	}
+
+	if fs.helpFlag != nil && fs.helpFlag.WasSpecified {
+		return ErrHelpRequest
+	}
+
+	// Check for unset, obligatory flags
+	for _, f := range fs.flags {
+		if f.Obligatory && !f.WasSpecified {
+			return fmt.Errorf("%s must be specified", f.Name())
+		}
+	}
+
+	// Check for multiple set flags in one mutex group
+	mgs := fs.MutexGroups()
+	for _, mg := range mgs {
+		wasSpecifiedCount := 0
+		names := make([]string, 0)
+		for _, flag := range mg {
+			names = append(names, flag.Name())
+			if flag.WasSpecified {
+				wasSpecifiedCount += 1
+			}
+		}
+		if wasSpecifiedCount >= 2 {
+			return fmt.Errorf("Only one of %s can be specified", strings.Join(names, ","))
+		}
+	}
 	return nil
 }
 
-func (fs *flagSet) parseNextItem(args []string) ([]*flag, []string, error) {
+func (fs *FlagSet) parseNextItem(args []string) ([]*flag, []string, error) {
 	if strings.HasPrefix(args[0], "--") {
 		return fs.parseLongFlag(args)
 	} else if strings.HasPrefix(args[0], "-") {
@@ -123,7 +169,7 @@ func (fs *flagSet) parseNextItem(args []string) ([]*flag, []string, error) {
 	panic("Invalid execution path")
 }
 
-func (fs *flagSet) parseLongFlag(args []string) ([]*flag, []string, error) {
+func (fs *FlagSet) parseLongFlag(args []string) ([]*flag, []string, error) {
 	longflagname := args[0][2:]
 	f, ok := fs.longMap[longflagname]
 	if !ok {
@@ -141,7 +187,7 @@ func (fs *flagSet) parseLongFlag(args []string) ([]*flag, []string, error) {
 	return []*flag{f}, args, nil
 }
 
-func (fs *flagSet) parseShortFlagCluster(args []string) ([]*flag, []string, error) {
+func (fs *FlagSet) parseShortFlagCluster(args []string) ([]*flag, []string, error) {
 	shortflagnames := args[0][1:]
 	args = args[1:]
 	r := make([]*flag, 0, len(shortflagnames))

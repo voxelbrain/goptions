@@ -8,13 +8,18 @@ import (
 func TestParse_StringValue(t *testing.T) {
 	var args []string
 	var err error
+	var fs *FlagSet
 	var options struct {
 		Name string `goptions:"--name, -n"`
 	}
 	expected := "SomeName"
 
 	args = []string{"--name", "SomeName"}
-	err = Parse(args, &options)
+	fs, err = NewFlagSet(&options)
+	if err != nil {
+		t.Fatalf("Could not parse options strucs: %s", err)
+	}
+	err = fs.Parse(args)
 	if err != nil {
 		t.Fatalf("Flag parsing failed: %s", err)
 	}
@@ -25,7 +30,11 @@ func TestParse_StringValue(t *testing.T) {
 	options.Name = ""
 
 	args = []string{"-n", "SomeName"}
-	err = Parse(args, &options)
+	fs, err = NewFlagSet(&options)
+	if err != nil {
+		t.Fatalf("Could not parse options strucs: %s", err)
+	}
+	err = fs.Parse(args)
 	if err != nil {
 		t.Fatalf("Flag parsing failed: %s", err)
 	}
@@ -37,17 +46,26 @@ func TestParse_StringValue(t *testing.T) {
 func TestParse_ObligatoryStringValue(t *testing.T) {
 	var args []string
 	var err error
+	var fs *FlagSet
 	var options struct {
 		Name string `goptions:"-n, obligatory"`
 	}
 	args = []string{}
-	err = Parse(args, &options)
+	fs, err = NewFlagSet(&options)
+	if err != nil {
+		t.Fatalf("Could not parse options strucs: %s", err)
+	}
+	err = fs.Parse(args)
 	if err == nil {
 		t.Fatalf("Parsing should have failed.")
 	}
 
 	args = []string{"-n", "SomeName"}
-	err = Parse(args, &options)
+	fs, err = NewFlagSet(&options)
+	if err != nil {
+		t.Fatalf("Could not parse options strucs: %s", err)
+	}
+	err = fs.Parse(args)
 	if err != nil {
 		t.Fatalf("Parsing failed: %s", err)
 	}
@@ -61,11 +79,16 @@ func TestParse_ObligatoryStringValue(t *testing.T) {
 func TestParse_UnknownFlag(t *testing.T) {
 	var args []string
 	var err error
+	var fs *FlagSet
 	var options struct {
 		Name string `goptions:"--name, -n"`
 	}
 	args = []string{"-k", "4"}
-	err = Parse(args, &options)
+	fs, err = NewFlagSet(&options)
+	if err != nil {
+		t.Fatalf("Could not parse options strucs: %s", err)
+	}
+	err = fs.Parse(args)
 	if err == nil {
 		t.Fatalf("Parsing should have failed.")
 	}
@@ -74,6 +97,7 @@ func TestParse_UnknownFlag(t *testing.T) {
 func TestParse_FlagCluster(t *testing.T) {
 	var args []string
 	var err error
+	var fs *FlagSet
 	var options struct {
 		Fast    bool `goptions:"-f"`
 		Silent  bool `goptions:"-q"`
@@ -82,7 +106,11 @@ func TestParse_FlagCluster(t *testing.T) {
 		Verbose int  `goptions:"-v, accumulate"`
 	}
 	args = []string{"-fqcvvv"}
-	err = Parse(args, &options)
+	fs, err = NewFlagSet(&options)
+	if err != nil {
+		t.Fatalf("Could not parse options strucs: %s", err)
+	}
+	err = fs.Parse(args)
 	if err != nil {
 		t.Fatalf("Parsing failed: %s", err)
 	}
@@ -99,12 +127,17 @@ func TestParse_FlagCluster(t *testing.T) {
 func TestParse_MutexGroup(t *testing.T) {
 	var args []string
 	var err error
+	var fs *FlagSet
 	var options struct {
 		Create bool `goptions:"--create, mutexgroup='action'"`
 		Delete bool `goptions:"--delete, mutexgroup='action'"`
 	}
 	args = []string{"--create", "--delete"}
-	err = Parse(args, &options)
+	fs, err = NewFlagSet(&options)
+	if err != nil {
+		t.Fatalf("Could not parse options strucs: %s", err)
+	}
+	err = fs.Parse(args)
 	if err == nil {
 		t.Fatalf("Parsing should have failed.")
 	}
@@ -113,18 +146,27 @@ func TestParse_MutexGroup(t *testing.T) {
 func TestParse_HelpFlag(t *testing.T) {
 	var args []string
 	var err error
+	var fs *FlagSet
 	var options struct {
 		Name string `goptions:"--name, -n"`
 		Help `goptions:"--help, -h"`
 	}
 	args = []string{"-n", "SomeNone", "-h"}
-	err = Parse(args, &options)
+	fs, err = NewFlagSet(&options)
+	if err != nil {
+		t.Fatalf("Could not parse options strucs: %s", err)
+	}
+	err = fs.Parse(args)
 	if err != ErrHelpRequest {
 		t.Fatalf("Expected ErrHelpRequest, got: %s", err)
 	}
 
 	args = []string{"-n", "SomeNone"}
-	err = Parse(args, &options)
+	fs, err = NewFlagSet(&options)
+	if err != nil {
+		t.Fatalf("Could not parse options strucs: %s", err)
+	}
+	err = fs.Parse(args)
 	if err != nil {
 		t.Fatalf("Unexpected error returned: %s", err)
 	}
@@ -133,6 +175,7 @@ func TestParse_HelpFlag(t *testing.T) {
 func TestParse_Verbs(t *testing.T) {
 	var args []string
 	var err error
+	var fs *FlagSet
 	var options struct {
 		Server string `goptions:"--server, -s"`
 
@@ -143,7 +186,11 @@ func TestParse_Verbs(t *testing.T) {
 	}
 
 	args = []string{"-s", "127.0.0.1", "create", "-n", "SomeDocument"}
-	err = Parse(args, &options)
+	fs, err = NewFlagSet(&options)
+	if err != nil {
+		t.Fatalf("Could not parse options strucs: %s", err)
+	}
+	err = fs.Parse(args)
 	if err != nil {
 		t.Fatalf("Parsing failed: %s", err)
 	}
