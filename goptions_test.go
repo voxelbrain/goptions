@@ -139,7 +139,7 @@ func TestParse_Verbs(t *testing.T) {
 		Verbs
 		Create struct {
 			Name string `goptions:"--name, -n"`
-		} `goptions:create`
+		} `goptions:"create"`
 	}
 
 	args = []string{"-s", "127.0.0.1", "create", "-n", "SomeDocument"}
