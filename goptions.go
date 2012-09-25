@@ -7,7 +7,6 @@ import (
 	"strings"
 )
 
-// type Verbs map[string]interface{}
 var (
 	ErrHelpRequest = errors.New("Request for Help")
 )

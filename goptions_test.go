@@ -1,6 +1,7 @@
 package goptions
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -83,7 +84,7 @@ func TestParse_FlagCluster(t *testing.T) {
 	args = []string{"-fqcvvv"}
 	err = Parse(args, &options)
 	if err != nil {
-		t.Fatalf("parsing failed: %s", err)
+		t.Fatalf("Parsing failed: %s", err)
 	}
 
 	if !(options.Fast &&
@@ -129,6 +130,30 @@ func TestParse_HelpFlag(t *testing.T) {
 	}
 }
 
+func TestParse_Verbs(t *testing.T) {
+	var args []string
+	var err error
+	var options struct {
+		Server string `goptions:"--server, -s"`
+
+		Verbs
+		Create struct {
+			Name string `goptions:"--name, -n"`
+		} `goptions:"create"`
+	}
+
+	args = []string{"-s", "127.0.0.1", "create", "-n", "SomeDocument"}
+	err = Parse(args, &options)
+	if err != nil {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+
+	if !(options.Server == "127.0.0.1" &&
+		options.Create.Name == "SomeDocument") {
+		t.Fatalf("Unexpected value: %v", options)
+	}
+}
+
 func TestParseTag_minimal(t *testing.T) {
 	var tag string
 	tag = `--name, -n, description='Some name'`
@@ -141,7 +166,7 @@ func TestParseTag_minimal(t *testing.T) {
 		Short:       []string{"n"},
 		Description: "Some name",
 	}
-	if !flagEqual(f, expected) {
+	if !reflect.DeepEqual(f, expected) {
 		t.Fatalf("Expected %#v, got %#v", expected, f)
 	}
 }
@@ -161,41 +186,7 @@ func TestParseTag_more(t *testing.T) {
 		MutexGroup:  "selector",
 		Obligatory:  true,
 	}
-	if !flagEqual(f, expected) {
+	if !reflect.DeepEqual(f, expected) {
 		t.Fatalf("Expected %#v, got %#v", expected, f)
 	}
-}
-
-func flagEqual(f1, f2 *flag) bool {
-	if !stringArrayEqual(f1.Long, f2.Long) {
-		return false
-	}
-	if !stringArrayEqual(f1.Short, f2.Short) {
-		return false
-	}
-	if f1.MutexGroup != f2.MutexGroup {
-		return false
-	}
-	if f1.Accumulate != f2.Accumulate {
-		return false
-	}
-	if f1.Description != f2.Description {
-		return false
-	}
-	if f1.Obligatory != f2.Obligatory {
-		return false
-	}
-	return true
-}
-
-func stringArrayEqual(a1, a2 []string) bool {
-	if len(a1) != len(a2) {
-		return false
-	}
-	for i := range a1 {
-		if a1[i] != a2[i] {
-			return false
-		}
-	}
-	return true
 }
