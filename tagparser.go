@@ -10,7 +10,7 @@ const (
 	_LONG_FLAG_REGEXP     = `--[[:word:]-]+`
 	_SHORT_FLAG_REGEXP    = `-[[:alnum:]]`
 	_BOOL_OPTION_REGEXP   = `[[:word:]-]+`
-	_QUOTED_STRING_REGEXP = `'((?:\\.|[^'])+)'`
+	_QUOTED_STRING_REGEXP = `'((?:\\'|[^\\'])+)'`
 	_VALUE_OPTION_REGEXP  = `[[:word:]-]+=` + _QUOTED_STRING_REGEXP
 )
 
@@ -18,8 +18,8 @@ var (
 	optionRegexp = regexp.MustCompile(`^(` + strings.Join([]string{_SHORT_FLAG_REGEXP, _LONG_FLAG_REGEXP, _BOOL_OPTION_REGEXP, _VALUE_OPTION_REGEXP}, "|") + `)(?:,|$)`)
 )
 
-func parseTag(tag string) (*flag, error) {
-	f := &flag{
+func parseTag(tag string) (*Flag, error) {
+	f := &Flag{
 		Short: make([]string, 0),
 		Long:  make([]string, 0),
 	}
@@ -40,7 +40,7 @@ func parseTag(tag string) (*flag, error) {
 		} else if strings.HasPrefix(option, "-") {
 			f.Short = append(f.Short, option[1:])
 		} else if strings.HasPrefix(option, "description=") {
-			f.Description = option[idx[4]:idx[5]]
+			f.Description = strings.Replace(option[idx[4]:idx[5]], `\`, ``, -1)
 		} else if strings.HasPrefix(option, "mutexgroup=") {
 			f.MutexGroup = option[idx[4]:idx[5]]
 		} else {

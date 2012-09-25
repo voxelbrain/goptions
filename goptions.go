@@ -1,65 +1,81 @@
 package goptions
 
 import (
-	"errors"
-	"fmt"
-	"reflect"
-	"strings"
+	"io"
+	"os"
+	"sync"
+	"text/tabwriter"
+	"text/template"
 )
 
 var (
-	ErrHelpRequest = errors.New("Request for Help")
+	globalFlagSet *FlagSet
 )
 
-// Catches remaining strings after parsing has finished
-type Remainder []string
-
-func Parse(args []string, v interface{}) error {
-	structValue := reflect.ValueOf(v)
-	if structValue.Kind() != reflect.Ptr {
-		panic("Value type is not a pointer to a struct")
-	}
-	structValue = structValue.Elem()
-	if structValue.Kind() != reflect.Struct {
-		panic("Value type is not a pointer to a struct")
-	}
-
-	fs, err := newFlagSet(structValue)
+func Parse(v interface{}) error {
+	fs, err := NewFlagSet(os.Args[0], v)
 	if err != nil {
 		return err
 	}
+	globalFlagSet = fs
 
-	e := fs.Parse(args)
+	e := fs.Parse(os.Args[1:])
 	if e != nil {
 		return e
 	}
 
-	if fs.helpFlag != nil && fs.helpFlag.WasSpecified {
-		return ErrHelpRequest
-	}
-
-	// Check for unset, obligatory flags
-	for _, f := range fs.flags {
-		if f.Obligatory && !f.WasSpecified {
-			return fmt.Errorf("%s must be specified", f.Name())
-		}
-	}
-
-	// Check for multiple set flags in one mutex group
-	mgs := fs.MutexGroups()
-	for _, mg := range mgs {
-		wasSpecifiedCount := 0
-		names := make([]string, 0)
-		for _, flag := range mg {
-			names = append(names, flag.Name())
-			if flag.WasSpecified {
-				wasSpecifiedCount += 1
-			}
-		}
-		if wasSpecifiedCount >= 2 {
-			return fmt.Errorf("Only one of %s can be specified", strings.Join(names, ","))
-		}
-	}
-
 	return nil
 }
+
+func PrintHelp() {
+	if globalFlagSet == nil {
+		panic("Must call Parse() before PrintHelp()")
+	}
+	globalFlagSet.PrintHelp(os.Stdout)
+}
+
+// Generates a new HelpFunc taking a `text/template.Template`-formatted
+// string as an argument.
+func NewTemplatedHelpFunc(tpl string) HelpFunc {
+	var once sync.Once
+	var t *template.Template
+	return func(w io.Writer, fs *FlagSet) {
+		once.Do(func() {
+			t = template.Must(template.New("helpTemplate").Parse(tpl))
+		})
+		err := t.Execute(w, fs)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func Must(fs *FlagSet, err error) *FlagSet {
+	if err != nil {
+		panic(err)
+	}
+	return fs
+}
+
+const (
+	DEFAULT_HELP = `
+Usage: {{.Name}} [global options] {{with .Verbs}}<verb> [verb options]{{end}}
+
+Global options:{{range .Flags}}
+	{{if len .Short}}-{{index .Short 0}},{{end}}	{{if len .Long}}--{{index .Long 0}}{{end}}	{{.Description}}{{if .Obligatory}} (*){{end}}{{end}}
+
+{{if .Verbs}}Verbs:{{range .Verbs}}
+	{{.Name}}:{{range .Flags}}
+		{{if len .Short}}-{{index .Short 0}},{{end}}	{{if len .Long}}--{{index .Long 0}}{{end}}	{{.Description}}{{if .Obligatory}} (*){{end}}{{end}}{{end}}{{end}}
+`
+)
+
+var DefaultHelpFunc = func() HelpFunc {
+	tplhf := NewTemplatedHelpFunc(DEFAULT_HELP)
+	return func(w io.Writer, fs *FlagSet) {
+		tw := &tabwriter.Writer{}
+		tw.Init(w, 4, 4, 1, ' ', 0)
+		tplhf(tw, fs)
+		tw.Flush()
+	}
+}()
