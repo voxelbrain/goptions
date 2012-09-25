@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"sync"
+	"text/tabwriter"
 	"text/template"
 )
 
@@ -35,7 +36,7 @@ func PrintHelp() {
 
 // Generates a new HelpFunc taking a `text/template.Template`-formatted
 // string as an argument.
-func NewHelpFunc(tpl string) HelpFunc {
+func NewTemplatedHelpFunc(tpl string) HelpFunc {
 	var once sync.Once
 	var t *template.Template
 	return func(w io.Writer, fs *FlagSet) {
@@ -61,12 +62,20 @@ const (
 Usage: {{.Name}} [global options] {{with .Verbs}}<verb> [verb options]{{end}}
 
 Global options:{{range .Flags}}
-	{{if len .Short}}-{{index .Short 0}},{{else}}   {{end}}{{if len .Long}} --{{index .Long 0}}{{end}}	{{.Description}}{{if .Obligatory}}(*){{end}}{{end}}
+	{{if len .Short}}-{{index .Short 0}},{{end}}	{{if len .Long}}--{{index .Long 0}}{{end}}	{{.Description}}{{if .Obligatory}} (*){{end}}{{end}}
 
 {{if .Verbs}}Verbs:{{range .Verbs}}
 	{{.Name}}:{{range .Flags}}
-		{{if len .Short}}-{{index .Short 0}},{{else}}   {{end}}{{if len .Long}} --{{index .Long 0}}{{end}}	{{.Description}}{{if .Obligatory}}(*){{end}}{{end}}{{end}}{{end}}
+		{{if len .Short}}-{{index .Short 0}},{{end}}	{{if len .Long}}--{{index .Long 0}}{{end}}	{{.Description}}{{if .Obligatory}} (*){{end}}{{end}}{{end}}{{end}}
 `
 )
 
-var DefaultHelpFunc = NewHelpFunc(DEFAULT_HELP)
+var DefaultHelpFunc = func() HelpFunc {
+	tplhf := NewTemplatedHelpFunc(DEFAULT_HELP)
+	return func(w io.Writer, fs *FlagSet) {
+		tw := &tabwriter.Writer{}
+		tw.Init(w, 4, 4, 1, ' ', 0)
+		tplhf(tw, fs)
+		tw.Flush()
+	}
+}()

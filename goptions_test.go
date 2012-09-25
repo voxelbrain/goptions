@@ -272,18 +272,18 @@ func ExamplePrintHelp() {
 	// Usage: goptions [global options] <verb> [verb options]
 	//
 	// Global options:
-	// 	-s, --server	Server to connect to(*)
-	// 	-p, --password	Don't prompt for password
-	// 	-v, --verbose	Set output threshold level
-	// 	-h, --help	Show this help
+	//     -s, --server   Server to connect to (*)
+	//     -p, --password Don't prompt for password
+	//     -v, --verbose  Set output threshold level
+	//     -h, --help     Show this help
 	//
 	// Verbs:
-	// 	create:
-	// 		-n, --name	Name of the entity to be created(*)
-	// 		    --directory	Create a directory
-	// 		    --file	Create a file
-	// 	delete:
-	// 		-n, --name	Name of the entity to be deleted(*)
-	// 		    --directory	Delete a directory
-	// 		    --file	Delete a file
+	//     create:
+	//         -n, --name      Name of the entity to be created (*)
+	//             --directory Create a directory
+	//             --file      Create a file
+	//     delete:
+	//         -n, --name      Name of the entity to be deleted (*)
+	//             --directory Delete a directory
+	//             --file      Delete a file
 }
