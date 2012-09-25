@@ -6,12 +6,14 @@ import (
 	"io"
 	"reflect"
 	"strings"
+	"sync"
 )
 
 type HelpFunc func(w io.Writer, fs *FlagSet)
 
 type FlagSet struct {
 	HelpFunc
+	Name     string
 	helpFlag *Flag
 	shortMap map[string]*Flag
 	longMap  map[string]*Flag
@@ -19,7 +21,7 @@ type FlagSet struct {
 	Verbs    map[string]*FlagSet
 }
 
-func NewFlagSet(v interface{}) (*FlagSet, error) {
+func NewFlagSet(name string, v interface{}) (*FlagSet, error) {
 	structValue := reflect.ValueOf(v)
 	if structValue.Kind() != reflect.Ptr {
 		panic("Value type is not a pointer to a struct")
@@ -28,25 +30,29 @@ func NewFlagSet(v interface{}) (*FlagSet, error) {
 	if structValue.Kind() != reflect.Struct {
 		panic("Value type is not a pointer to a struct")
 	}
-	return newFlagSet(structValue)
+	return newFlagSet(name, structValue)
 }
 
 // Internal version which skips type checking.
 // Can't obtain a pointer to a struct field using reflect.
-func newFlagSet(structValue reflect.Value) (*FlagSet, error) {
+func newFlagSet(name string, structValue reflect.Value) (*FlagSet, error) {
+	var once sync.Once
 	r := &FlagSet{
+		Name:     name,
 		Flags:    make([]*Flag, 0),
-		Verbs:    make(map[string]*FlagSet),
 		HelpFunc: DefaultHelpFunc,
 	}
 
 	var i int
 	// Parse Option fields
 	for i = 0; i < structValue.Type().NumField(); i++ {
-		tag := structValue.Type().Field(i).Tag.Get("goptions")
 		fieldValue := structValue.Field(i)
 		if fieldValue.Type().Name() == "Verbs" {
 			break
+		}
+		tag := structValue.Type().Field(i).Tag.Get("goptions")
+		if len(tag) == 0 {
+			continue
 		}
 		flag, err := parseTag(tag)
 		if err != nil {
@@ -65,9 +71,12 @@ func newFlagSet(structValue reflect.Value) (*FlagSet, error) {
 
 	// Parse verb fields
 	for i++; i < structValue.Type().NumField(); i++ {
+		once.Do(func() {
+			r.Verbs = make(map[string]*FlagSet)
+		})
 		fieldValue := structValue.Field(i)
 		tag := structValue.Type().Field(i).Tag.Get("goptions")
-		fs, err := newFlagSet(fieldValue)
+		fs, err := newFlagSet(tag, fieldValue)
 		if err != nil {
 			return nil, fmt.Errorf("Invalid verb: %s", err)
 		}
@@ -118,11 +127,10 @@ var (
 
 func (fs *FlagSet) Parse(args []string) error {
 	for len(args) > 0 {
-		Flags, restArgs, err := fs.parseNextItem(args)
+		restArgs, err := fs.parseNextItem(args)
 		if err != nil {
 			return err
 		}
-		fs.Flags = append(fs.Flags, Flags...)
 		args = restArgs
 	}
 
@@ -155,7 +163,7 @@ func (fs *FlagSet) Parse(args []string) error {
 	return nil
 }
 
-func (fs *FlagSet) parseNextItem(args []string) ([]*Flag, []string, error) {
+func (fs *FlagSet) parseNextItem(args []string) ([]string, error) {
 	if strings.HasPrefix(args[0], "--") {
 		return fs.parseLongFlag(args)
 	} else if strings.HasPrefix(args[0], "-") {
@@ -163,59 +171,57 @@ func (fs *FlagSet) parseNextItem(args []string) ([]*Flag, []string, error) {
 	} else {
 		verb, ok := fs.Verbs[args[0]]
 		if !ok {
-			return nil, args, fmt.Errorf("Unknown verb: %s", args[0])
+			return args, fmt.Errorf("Unknown verb: %s", args[0])
 		}
 		err := verb.Parse(args[1:])
 		if err != nil {
-			return nil, args, err
+			return args, err
 		}
-		return []*Flag{}, []string{}, nil
+		return []string{}, nil
 	}
 	panic("Invalid execution path")
 }
 
-func (fs *FlagSet) parseLongFlag(args []string) ([]*Flag, []string, error) {
+func (fs *FlagSet) parseLongFlag(args []string) ([]string, error) {
 	longflagname := args[0][2:]
 	f, ok := fs.longMap[longflagname]
 	if !ok {
-		return nil, args, fmt.Errorf("Unknown flag --%s", longflagname)
+		return args, fmt.Errorf("Unknown flag --%s", longflagname)
 	}
 	args = args[1:]
 	f.Set()
 	if f.NeedsExtraValue() {
 		err := f.SetValue(args[0])
 		if err != nil {
-			return nil, args, err
+			return args, err
 		}
 		args = args[1:]
 	}
-	return []*Flag{f}, args, nil
+	return args, nil
 }
 
-func (fs *FlagSet) parseShortFlagCluster(args []string) ([]*Flag, []string, error) {
+func (fs *FlagSet) parseShortFlagCluster(args []string) ([]string, error) {
 	shortflagnames := args[0][1:]
 	args = args[1:]
-	r := make([]*Flag, 0, len(shortflagnames))
 	for idx, shortflagname := range shortflagnames {
 		flag, ok := fs.shortMap[string(shortflagname)]
 		if !ok {
-			return nil, args, fmt.Errorf("Unknown flag -%s", string(shortflagname))
+			return args, fmt.Errorf("Unknown flag -%s", string(shortflagname))
 		}
 		flag.Set()
 		// If value-flag is given but is not the last in a short flag cluster,
 		// it's an error.
 		if flag.NeedsExtraValue() && idx != len(shortflagnames)-1 {
-			return nil, args, fmt.Errorf("Flag %s needs a value", flag.Name())
+			return args, fmt.Errorf("Flag %s needs a value", flag.Name())
 		} else if flag.NeedsExtraValue() {
 			err := flag.SetValue(args[0])
 			if err != nil {
-				return nil, args, err
+				return args, err
 			}
 			args = args[1:]
 		}
-		r = append(r, flag)
 	}
-	return r, args, nil
+	return args, nil
 }
 
 func (fs *FlagSet) PrintHelp(w io.Writer) {

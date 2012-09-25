@@ -10,7 +10,7 @@ const (
 	_LONG_FLAG_REGEXP     = `--[[:word:]-]+`
 	_SHORT_FLAG_REGEXP    = `-[[:alnum:]]`
 	_BOOL_OPTION_REGEXP   = `[[:word:]-]+`
-	_QUOTED_STRING_REGEXP = `'((?:\\.|[^'])+)'`
+	_QUOTED_STRING_REGEXP = `'((?:\\'|[^\\'])+)'`
 	_VALUE_OPTION_REGEXP  = `[[:word:]-]+=` + _QUOTED_STRING_REGEXP
 )
 
@@ -40,7 +40,7 @@ func parseTag(tag string) (*Flag, error) {
 		} else if strings.HasPrefix(option, "-") {
 			f.Short = append(f.Short, option[1:])
 		} else if strings.HasPrefix(option, "description=") {
-			f.Description = option[idx[4]:idx[5]]
+			f.Description = strings.Replace(option[idx[4]:idx[5]], `\`, ``, -1)
 		} else if strings.HasPrefix(option, "mutexgroup=") {
 			f.MutexGroup = option[idx[4]:idx[5]]
 		} else {

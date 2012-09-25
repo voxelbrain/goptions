@@ -1,6 +1,7 @@
 package goptions
 
 import (
+	"os"
 	"reflect"
 	"testing"
 )
@@ -15,7 +16,7 @@ func TestParse_StringValue(t *testing.T) {
 	expected := "SomeName"
 
 	args = []string{"--name", "SomeName"}
-	fs, err = NewFlagSet(&options)
+	fs, err = NewFlagSet("goptions", &options)
 	if err != nil {
 		t.Fatalf("Could not parse options strucs: %s", err)
 	}
@@ -30,7 +31,7 @@ func TestParse_StringValue(t *testing.T) {
 	options.Name = ""
 
 	args = []string{"-n", "SomeName"}
-	fs, err = NewFlagSet(&options)
+	fs, err = NewFlagSet("goptions", &options)
 	if err != nil {
 		t.Fatalf("Could not parse options strucs: %s", err)
 	}
@@ -51,7 +52,7 @@ func TestParse_ObligatoryStringValue(t *testing.T) {
 		Name string `goptions:"-n, obligatory"`
 	}
 	args = []string{}
-	fs, err = NewFlagSet(&options)
+	fs, err = NewFlagSet("goptions", &options)
 	if err != nil {
 		t.Fatalf("Could not parse options strucs: %s", err)
 	}
@@ -61,7 +62,7 @@ func TestParse_ObligatoryStringValue(t *testing.T) {
 	}
 
 	args = []string{"-n", "SomeName"}
-	fs, err = NewFlagSet(&options)
+	fs, err = NewFlagSet("goptions", &options)
 	if err != nil {
 		t.Fatalf("Could not parse options strucs: %s", err)
 	}
@@ -84,7 +85,7 @@ func TestParse_UnknownFlag(t *testing.T) {
 		Name string `goptions:"--name, -n"`
 	}
 	args = []string{"-k", "4"}
-	fs, err = NewFlagSet(&options)
+	fs, err = NewFlagSet("goptions", &options)
 	if err != nil {
 		t.Fatalf("Could not parse options strucs: %s", err)
 	}
@@ -106,7 +107,7 @@ func TestParse_FlagCluster(t *testing.T) {
 		Verbose int  `goptions:"-v, accumulate"`
 	}
 	args = []string{"-fqcvvv"}
-	fs, err = NewFlagSet(&options)
+	fs, err = NewFlagSet("goptions", &options)
 	if err != nil {
 		t.Fatalf("Could not parse options strucs: %s", err)
 	}
@@ -133,7 +134,7 @@ func TestParse_MutexGroup(t *testing.T) {
 		Delete bool `goptions:"--delete, mutexgroup='action'"`
 	}
 	args = []string{"--create", "--delete"}
-	fs, err = NewFlagSet(&options)
+	fs, err = NewFlagSet("goptions", &options)
 	if err != nil {
 		t.Fatalf("Could not parse options strucs: %s", err)
 	}
@@ -152,7 +153,7 @@ func TestParse_HelpFlag(t *testing.T) {
 		Help `goptions:"--help, -h"`
 	}
 	args = []string{"-n", "SomeNone", "-h"}
-	fs, err = NewFlagSet(&options)
+	fs, err = NewFlagSet("goptions", &options)
 	if err != nil {
 		t.Fatalf("Could not parse options strucs: %s", err)
 	}
@@ -162,7 +163,7 @@ func TestParse_HelpFlag(t *testing.T) {
 	}
 
 	args = []string{"-n", "SomeNone"}
-	fs, err = NewFlagSet(&options)
+	fs, err = NewFlagSet("goptions", &options)
 	if err != nil {
 		t.Fatalf("Could not parse options strucs: %s", err)
 	}
@@ -186,7 +187,7 @@ func TestParse_Verbs(t *testing.T) {
 	}
 
 	args = []string{"-s", "127.0.0.1", "create", "-n", "SomeDocument"}
-	fs, err = NewFlagSet(&options)
+	fs, err = NewFlagSet("goptions", &options)
 	if err != nil {
 		t.Fatalf("Could not parse options strucs: %s", err)
 	}
@@ -236,4 +237,53 @@ func TestParseTag_more(t *testing.T) {
 	if !reflect.DeepEqual(f, expected) {
 		t.Fatalf("Expected %#v, got %#v", expected, f)
 	}
+}
+
+func ExamplePrintHelp() {
+	var options struct {
+		Server    string `goptions:"-s, --server, obligatory, description='Server to connect to'"`
+		Password  string `goptions:"-p, --password, description='Don\\'t prompt for password'"`
+		Verbosity int    `goptions:"-v, --verbose, accumulate, description='Set output threshold level'"`
+		Help      `goptions:"-h, --help, description='Show this help'"`
+
+		Verbs
+		Create struct {
+			Name      string `goptions:"-n, --name, obligatory, description='Name of the entity to be created'"`
+			Directory bool   `goptions:"--directory, mutexgroup='type', description='Create a directory'"`
+			File      bool   `goptions:"--file, mutexgroup='type', description='Create a file'"`
+		} `goptions:"create"`
+		Delete struct {
+			Name      string `goptions:"-n, --name, obligatory, description='Name of the entity to be deleted'"`
+			Directory bool   `goptions:"--directory, mutexgroup='type', description='Delete a directory'"`
+			File      bool   `goptions:"--file, mutexgroup='type', description='Delete a file'"`
+		} `goptions:"delete"`
+	}
+	args := []string{"--help"}
+	fs := Must(NewFlagSet("goptions", &options))
+	err := fs.Parse(args)
+	if err == ErrHelpRequest {
+		fs.PrintHelp(os.Stdout)
+		return
+	} else if err != nil {
+		panic(err)
+	}
+
+	// Output:
+	// Usage: goptions [global options] <verb> [verb options]
+	//
+	// Global options:
+	// 	-s, --server	Server to connect to(*)
+	// 	-p, --password	Don't prompt for password
+	// 	-v, --verbose	Set output threshold level
+	// 	-h, --help	Show this help
+	//
+	// Verbs:
+	// 	create:
+	// 		-n, --name	Name of the entity to be created(*)
+	// 		    --directory	Create a directory
+	// 		    --file	Create a file
+	// 	delete:
+	// 		-n, --name	Name of the entity to be deleted(*)
+	// 		    --directory	Delete a directory
+	// 		    --file	Delete a file
 }
