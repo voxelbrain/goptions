@@ -1,9 +1,9 @@
 /*
 package goptions implements a flexible parser for command line options.
 
-Key targets were the support for both long and short flag version, mutually
-exclusive flags and verbs. Flags are defined by a (possibly anonymous) struct
-and the corresponding tags.
+Key targets were the support for both long and short flag versions, mutually
+exclusive flags, and verbs. Flags and their corresponding variables are defined
+by the tags in a (possibly anonymous) struct.
 
     var options struct {
     	Name string `goptions:"-n, --name"`
@@ -45,7 +45,7 @@ import (
 )
 
 const (
-	VERSION = "1.0"
+	VERSION = "1.0gg"
 )
 
 var (
