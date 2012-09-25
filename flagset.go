@@ -9,18 +9,28 @@ import (
 	"sync"
 )
 
+// HelpFunc is the signature of a function responsible for printing the help.
 type HelpFunc func(w io.Writer, fs *FlagSet)
 
+// A FlagSet represents one set of flags which belong to one particular program.
+// A FlagSet is also used to represent a subset of flags belonging to one verb.
 type FlagSet struct {
+	// This HelpFunc will be called when PrintHelp() is called.
 	HelpFunc
+	// Name of the program. Might be used by HelpFunc.
 	Name     string
 	helpFlag *Flag
 	shortMap map[string]*Flag
 	longMap  map[string]*Flag
-	Flags    []*Flag
-	Verbs    map[string]*FlagSet
+	// Global option flags
+	Flags []*Flag
+	// Verbs and corresponding FlagSets
+	Verbs map[string]*FlagSet
 }
 
+// NewFlagSet returns a new FlagSet containing all the flags which result from
+// parsing the tags of the struct. Said struct as to be passed to the function
+// as a pointer.
 func NewFlagSet(name string, v interface{}) (*FlagSet, error) {
 	structValue := reflect.ValueOf(v)
 	if structValue.Kind() != reflect.Ptr {
@@ -30,12 +40,12 @@ func NewFlagSet(name string, v interface{}) (*FlagSet, error) {
 	if structValue.Kind() != reflect.Struct {
 		panic("Value type is not a pointer to a struct")
 	}
-	return newFlagSet(name, structValue)
+	return newFlagset(name, structValue)
 }
 
 // Internal version which skips type checking.
 // Can't obtain a pointer to a struct field using reflect.
-func newFlagSet(name string, structValue reflect.Value) (*FlagSet, error) {
+func newFlagset(name string, structValue reflect.Value) (*FlagSet, error) {
 	var once sync.Once
 	r := &FlagSet{
 		Name:     name,
@@ -76,7 +86,7 @@ func newFlagSet(name string, structValue reflect.Value) (*FlagSet, error) {
 		})
 		fieldValue := structValue.Field(i)
 		tag := structValue.Type().Field(i).Tag.Get("goptions")
-		fs, err := newFlagSet(tag, fieldValue)
+		fs, err := newFlagset(tag, fieldValue)
 		if err != nil {
 			return nil, fmt.Errorf("Invalid verb: %s", err)
 		}
@@ -106,6 +116,8 @@ func (fs *FlagSet) longFlagMap() map[string]*Flag {
 	return r
 }
 
+// MutexGroups returns a map of Flag lists which contain mutually
+// exclusive flags.
 func (fs *FlagSet) MutexGroups() map[string][]*Flag {
 	r := make(map[string][]*Flag)
 	for _, f := range fs.Flags {
@@ -125,6 +137,8 @@ var (
 	ErrHelpRequest = errors.New("Request for Help")
 )
 
+// Parse takes the command line arguments and sets the corresponding values
+// in the FlagSet's struct.
 func (fs *FlagSet) Parse(args []string) error {
 	for len(args) > 0 {
 		restArgs, err := fs.parseNextItem(args)
@@ -189,9 +203,9 @@ func (fs *FlagSet) parseLongFlag(args []string) ([]string, error) {
 		return args, fmt.Errorf("Unknown flag --%s", longflagname)
 	}
 	args = args[1:]
-	f.Set()
+	f.set()
 	if f.NeedsExtraValue() {
-		err := f.SetValue(args[0])
+		err := f.setValue(args[0])
 		if err != nil {
 			return args, err
 		}
@@ -208,13 +222,13 @@ func (fs *FlagSet) parseShortFlagCluster(args []string) ([]string, error) {
 		if !ok {
 			return args, fmt.Errorf("Unknown flag -%s", string(shortflagname))
 		}
-		flag.Set()
+		flag.set()
 		// If value-flag is given but is not the last in a short flag cluster,
 		// it's an error.
 		if flag.NeedsExtraValue() && idx != len(shortflagnames)-1 {
 			return args, fmt.Errorf("Flag %s needs a value", flag.Name())
 		} else if flag.NeedsExtraValue() {
-			err := flag.SetValue(args[0])
+			err := flag.setValue(args[0])
 			if err != nil {
 				return args, err
 			}
@@ -224,6 +238,7 @@ func (fs *FlagSet) parseShortFlagCluster(args []string) ([]string, error) {
 	return args, nil
 }
 
+// Prints the FlagSet's help to the given writer.
 func (fs *FlagSet) PrintHelp(w io.Writer) {
 	fs.HelpFunc(w, fs)
 }

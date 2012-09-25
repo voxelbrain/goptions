@@ -5,6 +5,7 @@ import (
 	"reflect"
 )
 
+// Flag represents a single flag of a FlagSet.
 type Flag struct {
 	Short        []string
 	Long         []string
@@ -16,6 +17,9 @@ type Flag struct {
 	value        reflect.Value
 }
 
+// Return the name of the flag preceding the right amount of dashes.
+// The long name is preferred. If no name has been specified, "<unspecified>"
+// will be returned.
 func (f *Flag) Name() string {
 	if len(f.Long) > 0 {
 		return "--" + f.Long[0]
@@ -26,6 +30,7 @@ func (f *Flag) Name() string {
 	return "<unspecified>"
 }
 
+// Returns true if the flag expects a separate value on the command line.
 func (f *Flag) NeedsExtraValue() bool {
 	// Explicit over implicit
 	if f.value.Kind() == reflect.Bool {
@@ -37,16 +42,16 @@ func (f *Flag) NeedsExtraValue() bool {
 	return true
 }
 
-func (f *Flag) Set() {
+func (f *Flag) set() {
 	f.WasSpecified = true
 	if f.value.Kind() == reflect.Bool {
-		f.SetValue(true)
+		f.setValue(true)
 	} else if f.value.Kind() == reflect.Int && f.Accumulate {
-		f.SetValue(f.value.Interface().(int) + 1)
+		f.setValue(f.value.Interface().(int) + 1)
 	}
 }
 
-func (f *Flag) SetValue(v interface{}) (err error) {
+func (f *Flag) setValue(v interface{}) (err error) {
 	defer func() {
 		if x := recover(); x != nil {
 			if str, ok := x.(string); ok {

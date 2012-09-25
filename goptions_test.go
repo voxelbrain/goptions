@@ -239,7 +239,7 @@ func TestParseTag_more(t *testing.T) {
 	}
 }
 
-func ExamplePrintHelp() {
+func ExampleFlagSet_PrintHelp() {
 	var options struct {
 		Server    string `goptions:"-s, --server, obligatory, description='Server to connect to'"`
 		Password  string `goptions:"-p, --password, description='Don\\'t prompt for password'"`
@@ -262,7 +262,7 @@ func ExamplePrintHelp() {
 	fs := Must(NewFlagSet("goptions", &options))
 	err := fs.Parse(args)
 	if err == ErrHelpRequest {
-		fs.PrintHelp(os.Stdout)
+		fs.PrintHelp(os.Stderr)
 		return
 	} else if err != nil {
 		panic(err)
