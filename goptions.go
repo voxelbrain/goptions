@@ -54,18 +54,8 @@ var (
 
 // Parse parses the command-line flags from os.Args[1:].
 func Parse(v interface{}) error {
-	fs, err := NewFlagSet(os.Args[0], v)
-	if err != nil {
-		return err
-	}
-	globalFlagSet = fs
-
-	e := fs.Parse(os.Args[1:])
-	if e != nil {
-		return e
-	}
-
-	return nil
+	globalFlagSet = NewFlagSet(os.Args[0], v)
+	return globalFlagSet.Parse(os.Args[1:])
 }
 
 // PrintHelp renders the default help to os.Stderr.
@@ -91,15 +81,6 @@ func NewTemplatedHelpFunc(tpl string) HelpFunc {
 			panic(err)
 		}
 	}
-}
-
-// Must is a helper that wraps a call to a function returning (*FlagSet, error)
-// and panics if the error is non-nil.
-func Must(fs *FlagSet, err error) *FlagSet {
-	if err != nil {
-		panic(err)
-	}
-	return fs
 }
 
 const (
