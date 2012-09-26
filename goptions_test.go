@@ -172,6 +172,26 @@ func TestParse_Verbs(t *testing.T) {
 	}
 }
 
+func TestParse_IntValue(t *testing.T) {
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Limit int `goptions:"-l"`
+	}
+
+	args = []string{"-l", "123"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err != nil {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+
+	if !(options.Limit == 123) {
+		t.Fatalf("Unexpected value: %v", options)
+	}
+}
+
 func TestParseTag_minimal(t *testing.T) {
 	var tag string
 	tag = `--name, -n, description='Some name'`

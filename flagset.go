@@ -203,7 +203,7 @@ func (fs *FlagSet) parseLongFlag(args []string) ([]string, error) {
 	args = args[1:]
 	f.set()
 	if f.NeedsExtraValue() {
-		err := f.setValue(args[0])
+		err := f.setStringValue(args[0])
 		if err != nil {
 			return args, err
 		}
@@ -226,7 +226,7 @@ func (fs *FlagSet) parseShortFlagCluster(args []string) ([]string, error) {
 		if flag.NeedsExtraValue() && idx != len(shortflagnames)-1 {
 			return args, fmt.Errorf("Flag %s needs a value", flag.Name())
 		} else if flag.NeedsExtraValue() {
-			err := flag.setValue(args[0])
+			err := flag.setStringValue(args[0])
 			if err != nil {
 				return args, err
 			}

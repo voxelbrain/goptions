@@ -3,6 +3,7 @@ package goptions
 import (
 	"errors"
 	"reflect"
+	"strconv"
 )
 
 // Flag represents a single flag of a FlagSet.
@@ -51,6 +52,25 @@ func (f *Flag) set() {
 	}
 }
 
+func (f *Flag) setStringValue(val string) (err error) {
+	switch f.value.Interface().(type) {
+	case int:
+		intval, err := strconv.ParseInt(val, 10, 64)
+		if err != nil {
+			return err
+		}
+		return f.setValue(int(intval))
+	case float64:
+		intval, err := strconv.ParseFloat(val, 64)
+		if err != nil {
+			return err
+		}
+		return f.setValue(intval)
+	default:
+		return f.setValue(val)
+	}
+	return nil
+}
 func (f *Flag) setValue(v interface{}) (err error) {
 	defer func() {
 		if x := recover(); x != nil {
