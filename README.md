@@ -25,7 +25,7 @@ var options struct {
 		File      bool   `goptions:"--file, mutexgroup='type', description='Delete a file'"`
 	} `goptions:"delete"`
 }
-fs := goptions.Must(goptions.NewFlagSet("goptions", &options))
+fs := goptions.NewFlagSet("goptions", &options)
 err := fs.Parse([]string{"--help"})
 if err != nil{
 	fs.PrintHelp(os.Stderr)
