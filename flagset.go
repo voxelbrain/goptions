@@ -31,7 +31,9 @@ type FlagSet struct {
 // NewFlagSet returns a new FlagSet containing all the flags which result from
 // parsing the tags of the struct. Said struct as to be passed to the function
 // as a pointer.
-func NewFlagSet(name string, v interface{}) (*FlagSet, error) {
+// If a tag line is erroneous, NewFlagSet() panics as this is considered a
+// compile time error rather than a runtme error.
+func NewFlagSet(name string, v interface{}) *FlagSet {
 	structValue := reflect.ValueOf(v)
 	if structValue.Kind() != reflect.Ptr {
 		panic("Value type is not a pointer to a struct")
@@ -45,7 +47,7 @@ func NewFlagSet(name string, v interface{}) (*FlagSet, error) {
 
 // Internal version which skips type checking.
 // Can't obtain a pointer to a struct field using reflect.
-func newFlagset(name string, structValue reflect.Value) (*FlagSet, error) {
+func newFlagset(name string, structValue reflect.Value) *FlagSet {
 	var once sync.Once
 	r := &FlagSet{
 		Name:     name,
@@ -66,7 +68,7 @@ func newFlagset(name string, structValue reflect.Value) (*FlagSet, error) {
 		}
 		flag, err := parseTag(tag)
 		if err != nil {
-			return nil, fmt.Errorf("Invalid tagline: %s", err)
+			panic(fmt.Sprintf("Invalid tagline: %s", err))
 		}
 		flag.value = fieldValue
 
@@ -86,14 +88,10 @@ func newFlagset(name string, structValue reflect.Value) (*FlagSet, error) {
 		})
 		fieldValue := structValue.Field(i)
 		tag := structValue.Type().Field(i).Tag.Get("goptions")
-		fs, err := newFlagset(tag, fieldValue)
-		if err != nil {
-			return nil, fmt.Errorf("Invalid verb: %s", err)
-		}
-		r.Verbs[tag] = fs
+		r.Verbs[tag] = newFlagset(tag, fieldValue)
 	}
 
-	return r, nil
+	return r
 }
 
 func (fs *FlagSet) shortFlagMap() map[string]*Flag {
