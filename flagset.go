@@ -119,19 +119,56 @@ func (fs *FlagSet) longFlagMap() map[string]*Flag {
 	return r
 }
 
+type MutexGroup []*Flag
 // MutexGroups returns a map of Flag lists which contain mutually
 // exclusive flags.
-func (fs *FlagSet) MutexGroups() map[string][]*Flag {
-	r := make(map[string][]*Flag)
+func (fs *FlagSet) MutexGroups() map[string]MutexGroup {
+	r := make(map[string]MutexGroup)
 	for _, f := range fs.Flags {
 		mg := f.MutexGroup
 		if len(mg) == 0 {
 			continue
 		}
 		if _, ok := r[mg]; !ok {
-			r[mg] = make([]*Flag, 0)
+			r[mg] = make(MutexGroup, 0)
 		}
 		r[mg] = append(r[mg], f)
+	}
+	return r
+}
+
+func (mg MutexGroup) IsObligatory() bool {
+	for _, flag := range mg {
+		if flag.Obligatory {
+			return true
+		}
+	}
+	return false
+}
+
+func (mg MutexGroup) WasSpecified() bool {
+	for _, flag := range mg {
+		if flag.WasSpecified {
+			return true
+		}
+	}
+	return false
+}
+
+func (mg MutexGroup) IsValid() bool {
+	c := 0
+	for _, flag := range mg {
+		if flag.WasSpecified {
+			c++
+		}
+	}
+	return c <= 1 && (!mg.IsObligatory() || c == 1)
+}
+
+func (mg MutexGroup) Names() []string {
+	r := make([]string, len(mg))
+	for i, flag := range mg {
+		r[i] = flag.Name()
 	}
 	return r
 }
@@ -155,26 +192,19 @@ func (fs *FlagSet) Parse(args []string) error {
 		return ErrHelpRequest
 	}
 
-	// Check for unset, obligatory Flags
+	// Check for unset, obligatory, single Flags
 	for _, f := range fs.Flags {
-		if f.Obligatory && !f.WasSpecified {
+		if f.Obligatory && !f.WasSpecified && f.MutexGroup == "" {
 			return fmt.Errorf("%s must be specified", f.Name())
 		}
 	}
 
 	// Check for multiple set Flags in one mutex group
+	// Check also for unset, obligatory mutex groups
 	mgs := fs.MutexGroups()
 	for _, mg := range mgs {
-		wasSpecifiedCount := 0
-		names := make([]string, 0)
-		for _, flag := range mg {
-			names = append(names, flag.Name())
-			if flag.WasSpecified {
-				wasSpecifiedCount += 1
-			}
-		}
-		if wasSpecifiedCount >= 2 {
-			return fmt.Errorf("Only one of %s can be specified", strings.Join(names, ", "))
+		if !mg.IsValid() {
+			return fmt.Errorf("ONE of %s has to be specified", strings.Join(mg.Names(), ", "))
 		}
 	}
 	return nil
