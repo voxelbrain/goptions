@@ -18,10 +18,11 @@ type FlagSet struct {
 	// This HelpFunc will be called when PrintHelp() is called.
 	HelpFunc
 	// Name of the program. Might be used by HelpFunc.
-	Name     string
-	helpFlag *Flag
-	shortMap map[string]*Flag
-	longMap  map[string]*Flag
+	Name          string
+	helpFlag      *Flag
+	remainderFlag *Flag
+	shortMap      map[string]*Flag
+	longMap       map[string]*Flag
 	// Global option flags
 	Flags []*Flag
 	// Verbs and corresponding FlagSets
@@ -42,17 +43,18 @@ func NewFlagSet(name string, v interface{}) *FlagSet {
 	if structValue.Kind() != reflect.Struct {
 		panic("Value type is not a pointer to a struct")
 	}
-	return newFlagset(name, structValue)
+	return newFlagset(name, structValue, nil)
 }
 
 // Internal version which skips type checking.
 // Can't obtain a pointer to a struct field using reflect.
-func newFlagset(name string, structValue reflect.Value) *FlagSet {
+func newFlagset(name string, structValue reflect.Value, remainder *Flag) *FlagSet {
 	var once sync.Once
 	r := &FlagSet{
-		Name:     name,
-		Flags:    make([]*Flag, 0),
-		HelpFunc: DefaultHelpFunc,
+		Name:          name,
+		Flags:         make([]*Flag, 0),
+		HelpFunc:      DefaultHelpFunc,
+		remainderFlag: remainder,
 	}
 
 	var i int
@@ -63,9 +65,6 @@ func newFlagset(name string, structValue reflect.Value) *FlagSet {
 			break
 		}
 		tag := structValue.Type().Field(i).Tag.Get("goptions")
-		if len(tag) == 0 {
-			continue
-		}
 		flag, err := parseTag(tag)
 		if err != nil {
 			panic(fmt.Sprintf("Invalid tagline: %s", err))
@@ -75,9 +74,15 @@ func newFlagset(name string, structValue reflect.Value) *FlagSet {
 		switch flag.value.Interface().(type) {
 		case Help:
 			r.helpFlag = flag
+		case Remainder:
+			if r.remainderFlag == nil {
+				r.remainderFlag = flag
+			}
 		}
 
-		r.Flags = append(r.Flags, flag)
+		if len(tag) != 0 {
+			r.Flags = append(r.Flags, flag)
+		}
 	}
 	r.shortMap, r.longMap = r.shortFlagMap(), r.longFlagMap()
 
@@ -88,7 +93,7 @@ func newFlagset(name string, structValue reflect.Value) *FlagSet {
 		})
 		fieldValue := structValue.Field(i)
 		tag := structValue.Type().Field(i).Tag.Get("goptions")
-		r.Verbs[tag] = newFlagset(tag, fieldValue)
+		r.Verbs[tag] = newFlagset(tag, fieldValue, r.remainderFlag)
 	}
 
 	return r
@@ -180,7 +185,9 @@ func (fs *FlagSet) parseNextItem(args []string) ([]string, error) {
 		return fs.parseLongFlag(args)
 	} else if strings.HasPrefix(args[0], "-") {
 		return fs.parseShortFlagCluster(args)
-	} else {
+	}
+
+	if fs.Verbs != nil {
 		verb, ok := fs.Verbs[args[0]]
 		if !ok {
 			return args, fmt.Errorf("Unknown verb: %s", args[0])
@@ -191,7 +198,13 @@ func (fs *FlagSet) parseNextItem(args []string) ([]string, error) {
 		}
 		return []string{}, nil
 	}
-	panic("Invalid execution path")
+	if fs.remainderFlag != nil {
+		remainder := reflect.MakeSlice(fs.remainderFlag.value.Type(), len(args), len(args))
+		reflect.Copy(remainder, reflect.ValueOf(args))
+		fs.remainderFlag.value.Set(remainder)
+		return []string{}, nil
+	}
+	return args, fmt.Errorf("Invalid trailing arguments: %v", args)
 }
 
 func (fs *FlagSet) parseLongFlag(args []string) ([]string, error) {

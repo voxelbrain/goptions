@@ -6,3 +6,5 @@ type Help bool
 
 // Verbs marks the point in the struct where the verbs start.
 type Verbs interface{}
+
+type Remainder []string
