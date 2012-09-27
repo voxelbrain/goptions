@@ -48,7 +48,7 @@ import (
 )
 
 const (
-	VERSION = "1.3.0"
+	VERSION = "1.3.1"
 )
 
 var (
@@ -94,7 +94,9 @@ Global options:{{range .Flags}}
 
 {{if .Verbs}}Verbs:{{range .Verbs}}
 	{{.Name}}:{{range .Flags}}
-		{{if len .Short}}-{{index .Short 0}},{{end}}	{{if len .Long}}--{{index .Long 0}}{{end}}	{{.Description}}{{if .Obligatory}} (*){{end}}{{end}}{{end}}{{end}}`
+		{{if len .Short}}-{{index .Short 0}},{{end}}	{{if len .Long}}--{{index .Long 0}}{{end}}	{{.Description}}{{if .Obligatory}} (*){{end}}{{end}}{{end}}{{end}}
+
+`
 )
 
 // DefaultHelpFunc is a HelpFunc which renders the default help template and pipes
