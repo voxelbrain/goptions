@@ -39,6 +39,7 @@ package goptions
 import (
 	"io"
 	"os"
+	"path/filepath"
 	"sync"
 	"text/tabwriter"
 	"text/template"
@@ -54,7 +55,7 @@ var (
 
 // Parse parses the command-line flags from os.Args[1:].
 func Parse(v interface{}) error {
-	globalFlagSet = NewFlagSet(os.Args[0], v)
+	globalFlagSet = NewFlagSet(filepath.Base(os.Args[0]), v)
 	return globalFlagSet.Parse(os.Args[1:])
 }
 
