@@ -192,6 +192,30 @@ func TestParse_IntValue(t *testing.T) {
 	}
 }
 
+func TestParse_Remainder(t *testing.T) {
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Limit int `goptions:"-l"`
+		Remainder
+	}
+
+	args = []string{"-l", "123", "Something", "SomethingElse"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err != nil {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+
+	if !(options.Limit == 123 &&
+		len(options.Remainder) == 2 &&
+		options.Remainder[0] == "Something" &&
+		options.Remainder[1] == "SomethingElse") {
+		t.Fatalf("Unexpected value: %v", options)
+	}
+}
+
 func TestParseTag_minimal(t *testing.T) {
 	var tag string
 	tag = `--name, -n, description='Some name'`
