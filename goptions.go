@@ -28,7 +28,9 @@ Each tag can also list any number of the following options:
                         used by the HelpFunc.
     mutexgroup='...'  - Sets the name of the MutexGroup. Only one flag of the
                         ones sharing a MutexGroup can be set. Otherwise an error
-                        will be returned when Parse() is called.
+                        will be returned when Parse() is called. If one flag in a
+                        MutexGroup is `obligatory` one flag of the group must be
+                        specified.
 
 goptions also has support for verbs. Each verb accepts its own set of flags which
 take exactly the same tag format as global options. For an usage example of verbs
@@ -46,7 +48,7 @@ import (
 )
 
 const (
-	VERSION = "1.2.0"
+	VERSION = "1.3.0"
 )
 
 var (
