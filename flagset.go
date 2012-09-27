@@ -167,7 +167,7 @@ func (fs *FlagSet) Parse(args []string) error {
 	mgs := fs.MutexGroups()
 	for _, mg := range mgs {
 		if !mg.IsValid() {
-			return fmt.Errorf("ONE of %s has to be specified", strings.Join(mg.Names(), ", "))
+			return fmt.Errorf("ONE of %s must be specified", strings.Join(mg.Names(), ", "))
 		}
 	}
 	return nil
