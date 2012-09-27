@@ -208,11 +208,55 @@ func TestParse_Remainder(t *testing.T) {
 		t.Fatalf("Parsing failed: %s", err)
 	}
 
-	if !(options.Limit == 123 &&
-		len(options.Remainder) == 2 &&
+	if !(len(options.Remainder) == 2 &&
 		options.Remainder[0] == "Something" &&
 		options.Remainder[1] == "SomethingElse") {
 		t.Fatalf("Unexpected value: %v", options)
+	}
+}
+
+func TestParse_VerbRemainder(t *testing.T) {
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Limit int `goptions:"-l"`
+		Remainder
+
+		Verbs
+		Create struct {
+			Fast bool `goptions:"-f"`
+			Remainder
+		} `goptions:"create"`
+	}
+
+	args = []string{"create", "-f", "Something", "SomethingElse"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err != nil {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+
+	if !(len(options.Remainder) == 2 &&
+		options.Remainder[0] == "Something" &&
+		options.Remainder[1] == "SomethingElse") {
+		t.Fatalf("Unexpected value: %v", options)
+	}
+}
+
+func TestParse_NoRemainder(t *testing.T) {
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Fast bool `goptions:"-f"`
+	}
+
+	args = []string{"-f", "Something", "SomethingElse"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err == nil {
+		t.Fatalf("Parsing should have failed")
 	}
 }
 
