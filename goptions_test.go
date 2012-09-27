@@ -260,6 +260,35 @@ func TestParse_NoRemainder(t *testing.T) {
 	}
 }
 
+func TestParse_ObligatoryMutexGroup(t *testing.T) {
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Create bool `goptions:"-c, mutexgroup='action', obligatory"`
+		Delete bool `goptions:"-d, mutexgroup='action'"`
+	}
+
+	args = []string{}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err == nil {
+		t.Fatalf("Parsing should have failed")
+	}
+	args = []string{"-c", "-d"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err == nil {
+		t.Fatalf("Parsing should have failed")
+	}
+	args = []string{"-d"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err != nil {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+}
+
 func TestParseTag_minimal(t *testing.T) {
 	var tag string
 	tag = `--name, -n, description='Some name'`

@@ -46,8 +46,8 @@ func NewFlagSet(name string, v interface{}) *FlagSet {
 	return newFlagset(name, structValue, nil)
 }
 
-// Internal version which skips type checking.
-// Can't obtain a pointer to a struct field using reflect.
+// Internal version which skips type checking and takes the "parent"'s
+// remainder flag as a parameter.
 func newFlagset(name string, structValue reflect.Value, remainder *Flag) *FlagSet {
 	var once sync.Once
 	r := &FlagSet{
@@ -121,15 +121,15 @@ func (fs *FlagSet) longFlagMap() map[string]*Flag {
 
 // MutexGroups returns a map of Flag lists which contain mutually
 // exclusive flags.
-func (fs *FlagSet) MutexGroups() map[string][]*Flag {
-	r := make(map[string][]*Flag)
+func (fs *FlagSet) MutexGroups() map[string]MutexGroup {
+	r := make(map[string]MutexGroup)
 	for _, f := range fs.Flags {
 		mg := f.MutexGroup
 		if len(mg) == 0 {
 			continue
 		}
 		if _, ok := r[mg]; !ok {
-			r[mg] = make([]*Flag, 0)
+			r[mg] = make(MutexGroup, 0)
 		}
 		r[mg] = append(r[mg], f)
 	}
@@ -155,26 +155,19 @@ func (fs *FlagSet) Parse(args []string) error {
 		return ErrHelpRequest
 	}
 
-	// Check for unset, obligatory Flags
+	// Check for unset, obligatory, single Flags
 	for _, f := range fs.Flags {
-		if f.Obligatory && !f.WasSpecified {
+		if f.Obligatory && !f.WasSpecified && f.MutexGroup == "" {
 			return fmt.Errorf("%s must be specified", f.Name())
 		}
 	}
 
 	// Check for multiple set Flags in one mutex group
+	// Check also for unset, obligatory mutex groups
 	mgs := fs.MutexGroups()
 	for _, mg := range mgs {
-		wasSpecifiedCount := 0
-		names := make([]string, 0)
-		for _, flag := range mg {
-			names = append(names, flag.Name())
-			if flag.WasSpecified {
-				wasSpecifiedCount += 1
-			}
-		}
-		if wasSpecifiedCount >= 2 {
-			return fmt.Errorf("Only one of %s can be specified", strings.Join(names, ","))
+		if !mg.IsValid() {
+			return fmt.Errorf("ONE of %s must be specified", strings.Join(mg.Names(), ", "))
 		}
 	}
 	return nil
