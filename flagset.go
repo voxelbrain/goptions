@@ -174,7 +174,7 @@ func (fs *FlagSet) Parse(args []string) error {
 			}
 		}
 		if wasSpecifiedCount >= 2 {
-			return fmt.Errorf("Only one of %s can be specified", strings.Join(names, ","))
+			return fmt.Errorf("Only one of %s can be specified", strings.Join(names, ", "))
 		}
 	}
 	return nil
