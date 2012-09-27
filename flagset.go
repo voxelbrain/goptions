@@ -46,8 +46,8 @@ func NewFlagSet(name string, v interface{}) *FlagSet {
 	return newFlagset(name, structValue, nil)
 }
 
-// Internal version which skips type checking.
-// Can't obtain a pointer to a struct field using reflect.
+// Internal version which skips type checking and takes the "parent"'s
+// remainder flag as a parameter.
 func newFlagset(name string, structValue reflect.Value, remainder *Flag) *FlagSet {
 	var once sync.Once
 	r := &FlagSet{
@@ -119,7 +119,6 @@ func (fs *FlagSet) longFlagMap() map[string]*Flag {
 	return r
 }
 
-type MutexGroup []*Flag
 // MutexGroups returns a map of Flag lists which contain mutually
 // exclusive flags.
 func (fs *FlagSet) MutexGroups() map[string]MutexGroup {
@@ -133,42 +132,6 @@ func (fs *FlagSet) MutexGroups() map[string]MutexGroup {
 			r[mg] = make(MutexGroup, 0)
 		}
 		r[mg] = append(r[mg], f)
-	}
-	return r
-}
-
-func (mg MutexGroup) IsObligatory() bool {
-	for _, flag := range mg {
-		if flag.Obligatory {
-			return true
-		}
-	}
-	return false
-}
-
-func (mg MutexGroup) WasSpecified() bool {
-	for _, flag := range mg {
-		if flag.WasSpecified {
-			return true
-		}
-	}
-	return false
-}
-
-func (mg MutexGroup) IsValid() bool {
-	c := 0
-	for _, flag := range mg {
-		if flag.WasSpecified {
-			c++
-		}
-	}
-	return c <= 1 && (!mg.IsObligatory() || c == 1)
-}
-
-func (mg MutexGroup) Names() []string {
-	r := make([]string, len(mg))
-	for i, flag := range mg {
-		r[i] = flag.Name()
 	}
 	return r
 }
