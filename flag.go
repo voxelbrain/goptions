@@ -2,21 +2,20 @@ package goptions
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
 )
 
 // Flag represents a single flag of a FlagSet.
 type Flag struct {
-	Short            string
-	Long             string
-	MutexGroup       string
-	Accumulate       bool
-	Description      string
-	Obligatory       bool
-	WasSpecified     bool
-	WasSpecifiedLong bool
-	value            reflect.Value
+	Short        string
+	Long         string
+	MutexGroups  []string
+	Description  string
+	Obligatory   bool
+	WasSpecified bool
+	value        reflect.Value
 }
 
 // Return the name of the flag preceding the right amount of dashes.
@@ -32,18 +31,46 @@ func (f *Flag) Name() string {
 	return "<unspecified>"
 }
 
-// Returns true if the flag expects a separate value.
+// NeedsExtraValue returns true if the flag expects a separate value.
 func (f *Flag) NeedsExtraValue() bool {
 	// Explicit over implicit
 	if f.value.Kind() == reflect.Bool {
 		return false
 	}
-	if f.value.Kind() == reflect.Int && f.Accumulate && !f.WasSpecifiedLong {
-		return false
-	}
 	return true
 }
 
+// IsMulti returns true if the flag can be specified multiple times.
+func (f *Flag) IsMulti() bool {
+	if f.value.Kind() == reflect.Slice {
+		return true
+	}
+	return false
+}
+
+func (f *Flag) Parse(args []string) ([]string, error) {
+	if f.WasSpecified && !f.IsMulti() {
+		return args, fmt.Errorf("Flag %s can only be specified once", f.Name())
+	}
+	if f.NeedsExtraValue() && len(args) <= 0 {
+		return args, fmt.Errorf("Flag %s needs an argument", f.Name())
+	}
+	f.WasSpecified = true
+	return f.parseArgument(args)
+}
+
+func (f *Flag) parseArgument(args []string) ([]string, error) {
+	vkind := f.value.Kind()
+	vtype := f.value.Type()
+
+	// Loop
+	panic("Invalid execution path")
+}
+
+func setValue(v reflect.Value, value interface{}) error {
+}
+
+// Old
 func (f *Flag) set() {
 	f.WasSpecified = true
 	if f.value.Kind() == reflect.Bool {
@@ -90,6 +117,7 @@ func (f *Flag) setStringValue(val string) (err error) {
 	}
 	return nil
 }
+
 func (f *Flag) setValue(v interface{}) (err error) {
 	defer func() {
 		if x := recover(); x != nil {
