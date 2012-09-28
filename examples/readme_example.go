@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/voxelbrain/goptions"
-	"fmt"
 )
 
 func main() {
@@ -24,12 +23,5 @@ func main() {
 			File      bool   `goptions:"--file, mutexgroup='type', description='Delete a file'"`
 		} `goptions:"delete"`
 	}
-	err := goptions.Parse(&options)
-	if err != nil {
-		if err != goptions.ErrHelpRequest {
-			fmt.Printf("Error: %s\n", err)
-		}
-		goptions.PrintHelp()
-		return
-	}
+	goptions.ParseAndFail(&options)
 }

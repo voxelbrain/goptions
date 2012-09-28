@@ -39,6 +39,7 @@ see the PrintHelp() example.
 package goptions
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -54,6 +55,22 @@ const (
 var (
 	globalFlagSet *FlagSet
 )
+
+// ParseAndFail is a convenience function to parse tos.Args[1:] and print
+// the help if an error occurs. This should cover 90% of this library's
+// applications.
+func ParseAndFail(v interface{}) {
+	err := Parse(v)
+	if err != nil {
+		errCode := 0
+		if err != ErrHelpRequest {
+			errCode = 1
+			fmt.Printf("Error: %s\n", err)
+		}
+		PrintHelp()
+		os.Exit(errCode)
+	}
+}
 
 // Parse parses the command-line flags from os.Args[1:].
 func Parse(v interface{}) error {
