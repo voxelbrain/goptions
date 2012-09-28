@@ -208,7 +208,12 @@ func (fs *FlagSet) parseLongFlag(args []string) ([]string, error) {
 	}
 	args = args[1:]
 	f.set()
-	if f.NeedsExtraValue() {
+	if f.NeedsExtraValue() && len(args) <= 0 {
+		return args, fmt.Errorf("Flag %s needs a value", f.Name())
+	} else if f.NeedsExtraValue() {
+		if len(args) <= 0 {
+
+		}
 		err := f.setStringValue(args[0])
 		if err != nil {
 			return args, err
@@ -222,17 +227,17 @@ func (fs *FlagSet) parseShortFlagCluster(args []string) ([]string, error) {
 	shortflagnames := args[0][1:]
 	args = args[1:]
 	for idx, shortflagname := range shortflagnames {
-		flag, ok := fs.shortMap[string(shortflagname)]
+		f, ok := fs.shortMap[string(shortflagname)]
 		if !ok {
 			return args, fmt.Errorf("Unknown flag -%s", string(shortflagname))
 		}
-		flag.set()
+		f.set()
 		// If value-flag is given but is not the last in a short flag cluster,
 		// it's an error.
-		if flag.NeedsExtraValue() && idx != len(shortflagnames)-1 {
-			return args, fmt.Errorf("Flag %s needs a value", flag.Name())
-		} else if flag.NeedsExtraValue() {
-			err := flag.setStringValue(args[0])
+		if f.NeedsExtraValue() && (idx != len(shortflagnames)-1 || len(args) <= 0) {
+			return args, fmt.Errorf("Flag %s needs a value", f.Name())
+		} else if f.NeedsExtraValue() {
+			err := f.setStringValue(args[0])
 			if err != nil {
 				return args, err
 			}
