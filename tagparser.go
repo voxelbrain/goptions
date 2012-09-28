@@ -19,10 +19,7 @@ var (
 )
 
 func parseTag(tag string) (*Flag, error) {
-	f := &Flag{
-		Short: make([]string, 0),
-		Long:  make([]string, 0),
-	}
+	f := &Flag{}
 	for {
 		tag = strings.TrimSpace(tag)
 		if len(tag) == 0 {
@@ -36,9 +33,15 @@ func parseTag(tag string) (*Flag, error) {
 		tag = tag[idx[1]:]
 
 		if strings.HasPrefix(option, "--") {
-			f.Long = append(f.Long, option[2:])
+			if f.Long != "" {
+				return nil, fmt.Errorf("Multiple flags assigned to a member: %s", strings.Join([]string{"--" + f.Long, option}, ", "))
+			}
+			f.Long = option[2:]
 		} else if strings.HasPrefix(option, "-") {
-			f.Short = append(f.Short, option[1:])
+			if f.Short != "" {
+				return nil, fmt.Errorf("Multiple flags assigned to a member: %s", strings.Join([]string{"-" + f.Short, option}, ", "))
+			}
+			f.Short = option[1:]
 		} else if strings.HasPrefix(option, "description=") {
 			f.Description = strings.Replace(option[idx[4]:idx[5]], `\`, ``, -1)
 		} else if strings.HasPrefix(option, "mutexgroup=") {

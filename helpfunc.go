@@ -31,11 +31,11 @@ const (
 	_DEFAULT_HELP = `Usage: {{.Name}} [global options] {{with .Verbs}}<verb> [verb options]{{end}}
 
 Global options:{{range .Flags}}
-	{{if len .Short}}-{{index .Short 0}},{{end}}	{{if len .Long}}--{{index .Long 0}}{{end}}	{{.Description}}{{if .Obligatory}} (*){{end}}{{end}}
+	{{if .Short}}-{{.Short}},{{end}}	{{if .Long}}--{{.Long}}{{end}}	{{.Description}}{{if .Obligatory}} (*){{end}}{{end}}
 
 {{if .Verbs}}Verbs:{{range .Verbs}}
 	{{.Name}}:{{range .Flags}}
-		{{if len .Short}}-{{index .Short 0}},{{end}}	{{if len .Long}}--{{index .Long 0}}{{end}}	{{.Description}}{{if .Obligatory}} (*){{end}}{{end}}{{end}}{{end}}
+		{{if .Short}}-{{.Short}},{{end}}	{{if .Long}}--{{.Long}}{{end}}	{{.Description}}{{if .Obligatory}} (*){{end}}{{end}}{{end}}{{end}}
 
 `
 )

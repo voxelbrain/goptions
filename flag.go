@@ -8,8 +8,8 @@ import (
 
 // Flag represents a single flag of a FlagSet.
 type Flag struct {
-	Short            []string
-	Long             []string
+	Short            string
+	Long             string
 	MutexGroup       string
 	Accumulate       bool
 	Description      string
@@ -24,10 +24,10 @@ type Flag struct {
 // will be returned.
 func (f *Flag) Name() string {
 	if len(f.Long) > 0 {
-		return "--" + f.Long[0]
+		return "--" + f.Long
 	}
 	if len(f.Short) > 0 {
-		return "-" + f.Short[0]
+		return "-" + f.Short
 	}
 	return "<unspecified>"
 }

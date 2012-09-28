@@ -99,9 +99,7 @@ func newFlagset(name string, structValue reflect.Value, remainder *Flag) *FlagSe
 func (fs *FlagSet) shortFlagMap() map[string]*Flag {
 	r := make(map[string]*Flag)
 	for _, flag := range fs.Flags {
-		for _, short := range flag.Short {
-			r[short] = flag
-		}
+		r[flag.Short] = flag
 	}
 	return r
 }
@@ -109,9 +107,7 @@ func (fs *FlagSet) shortFlagMap() map[string]*Flag {
 func (fs *FlagSet) longFlagMap() map[string]*Flag {
 	r := make(map[string]*Flag)
 	for _, flag := range fs.Flags {
-		for _, long := range flag.Long {
-			r[long] = flag
-		}
+		r[flag.Long] = flag
 	}
 	return r
 }

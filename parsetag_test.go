@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestParseTag_minimal(t *testing.T) {
+func TestParseTag_Minimal(t *testing.T) {
 	var tag string
 	tag = `--name, -n, description='Some name'`
 	f, e := parseTag(tag)
@@ -13,8 +13,8 @@ func TestParseTag_minimal(t *testing.T) {
 		t.Fatalf("Tag parsing failed: %s", e)
 	}
 	expected := &Flag{
-		Long:        []string{"name"},
-		Short:       []string{"n"},
+		Long:        "name",
+		Short:       "n",
 		Description: "Some name",
 	}
 	if !reflect.DeepEqual(f, expected) {
@@ -22,7 +22,7 @@ func TestParseTag_minimal(t *testing.T) {
 	}
 }
 
-func TestParseTag_more(t *testing.T) {
+func TestParseTag_More(t *testing.T) {
 	var tag string
 	tag = `--name, -n, description='Some name', mutexgroup='selector', obligatory`
 	f, e := parseTag(tag)
@@ -30,8 +30,8 @@ func TestParseTag_more(t *testing.T) {
 		t.Fatalf("Tag parsing failed: %s", e)
 	}
 	expected := &Flag{
-		Long:        []string{"name"},
-		Short:       []string{"n"},
+		Long:        "name",
+		Short:       "n",
 		Accumulate:  false,
 		Description: "Some name",
 		MutexGroup:  "selector",
@@ -39,5 +39,21 @@ func TestParseTag_more(t *testing.T) {
 	}
 	if !reflect.DeepEqual(f, expected) {
 		t.Fatalf("Expected %#v, got %#v", expected, f)
+	}
+}
+
+func TestParseTag_MultipleFlags(t *testing.T) {
+	var tag string
+	var e error
+	tag = `--name1, --name2`
+	_, e = parseTag(tag)
+	if e == nil {
+		t.Fatalf("Parsing should have failed")
+	}
+
+	tag = `-n, -v`
+	_, e = parseTag(tag)
+	if e == nil {
+		t.Fatalf("Parsing should have failed")
 	}
 }
