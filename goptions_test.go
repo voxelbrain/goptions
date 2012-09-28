@@ -260,6 +260,29 @@ func TestParse_NoRemainder(t *testing.T) {
 	}
 }
 
+func TestParse_MissingValue(t *testing.T) {
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Name string `goptions:"-n, --name"`
+	}
+
+	args = []string{"-n"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err == nil {
+		t.Fatalf("Parsing should have failed")
+	}
+
+	args = []string{"--name"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err == nil {
+		t.Fatalf("Parsing should have failed")
+	}
+}
+
 func TestParse_ObligatoryMutexGroup(t *testing.T) {
 	var args []string
 	var err error
@@ -275,12 +298,14 @@ func TestParse_ObligatoryMutexGroup(t *testing.T) {
 	if err == nil {
 		t.Fatalf("Parsing should have failed")
 	}
+
 	args = []string{"-c", "-d"}
 	fs = NewFlagSet("goptions", &options)
 	err = fs.Parse(args)
 	if err == nil {
 		t.Fatalf("Parsing should have failed")
 	}
+
 	args = []string{"-d"}
 	fs = NewFlagSet("goptions", &options)
 	err = fs.Parse(args)
