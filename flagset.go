@@ -9,9 +9,6 @@ import (
 	"sync"
 )
 
-// HelpFunc is the signature of a function responsible for printing the help.
-type HelpFunc func(w io.Writer, fs *FlagSet)
-
 // A FlagSet represents one set of flags which belong to one particular program.
 // A FlagSet is also used to represent a subset of flags belonging to one verb.
 type FlagSet struct {
