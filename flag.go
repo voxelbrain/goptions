@@ -64,6 +64,15 @@ func (f *Flag) setShort() {
 
 func (f *Flag) setStringValue(val string) (err error) {
 	switch f.value.Interface().(type) {
+	case Marshaler:
+		newval := reflect.New(f.value.Type()).Elem()
+		if newval.Kind() == reflect.Ptr {
+			newptrval := reflect.New(f.value.Type().Elem())
+			newval.Set(newptrval)
+		}
+		err := newval.Interface().(Marshaler).MarshalGoption(val)
+		f.value.Set(newval)
+		return err
 	case int:
 		intval, err := strconv.ParseInt(val, 10, 64)
 		if err != nil {
