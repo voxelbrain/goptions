@@ -1,8 +1,8 @@
 package goptions
 
 import (
-	"testing"
 	"reflect"
+	"testing"
 )
 
 func TestParseTag_minimal(t *testing.T) {

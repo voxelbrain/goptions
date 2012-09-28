@@ -281,6 +281,29 @@ func TestParse_MissingValue(t *testing.T) {
 	}
 }
 
+func TestParse_Accumulate(t *testing.T) {
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Verbosity int `goptions:"-v, --verbose, accumulate"`
+	}
+
+	args = []string{"-vvvv"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err != nil || options.Verbosity != 4 {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+
+	args = []string{"--verbose", "4"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err != nil || options.Verbosity != 4 {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+}
+
 func TestParse_ObligatoryMutexGroup(t *testing.T) {
 	var args []string
 	var err error
@@ -311,5 +334,3 @@ func TestParse_ObligatoryMutexGroup(t *testing.T) {
 		t.Fatalf("Parsing failed: %s", err)
 	}
 }
-
-
