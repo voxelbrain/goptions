@@ -7,8 +7,8 @@ by the tags in a (possibly anonymous) struct.
 # Example
 
 ```Go
-var options struct {
-	Server    string `goptions:"-s, --server, obligatory, description='Server to connect to'"`
+options := struct {
+	Server    string `goptions:"-s, --server, description='Server to connect to'"`
 	Password  string `goptions:"-p, --password, description='Don\\'t prompt for password'"`
 	Verbosity int    `goptions:"-v, --verbose, accumulate, description='Set output threshold level'"`
 	goptions.Help    `goptions:"-h, --help, description='Show this help'"`
@@ -24,6 +24,8 @@ var options struct {
 		Directory bool   `goptions:"--directory, mutexgroup='type', description='Delete a directory'"`
 		File      bool   `goptions:"--file, mutexgroup='type', description='Delete a file'"`
 	} `goptions:"delete"`
+}{ // Default values go here
+	Server: "localhost",
 }
 fs := goptions.NewFlagSet("goptions", &options)
 err := fs.Parse([]string{"--help"})
@@ -53,4 +55,4 @@ if err != nil{
 ```
 
 ---
-Version 1.3.3
+Version 1.3.4
