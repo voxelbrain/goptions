@@ -1,11 +1,12 @@
 package goptions
 
 import (
-	"fmt"
-	"strings"
-	"testing"
+// "fmt"
+// "strings"
+// "testing"
 )
 
+/*
 type Name struct {
 	FirstName string
 	LastName  string
@@ -37,3 +38,4 @@ func TestMarshaler(t *testing.T) {
 		t.Fatalf("Unexpected value: %#v", options)
 	}
 }
+*/

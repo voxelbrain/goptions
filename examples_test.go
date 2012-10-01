@@ -1,6 +1,7 @@
 package goptions
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -30,7 +31,7 @@ func ExampleFlagSet_PrintHelp() {
 		fs.PrintHelp(os.Stderr)
 		return
 	} else if err != nil {
-		panic(err)
+		fmt.Printf("Failure: %s", err)
 	}
 
 	// Output:
