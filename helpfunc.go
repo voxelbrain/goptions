@@ -2,30 +2,13 @@ package goptions
 
 import (
 	"io"
-	"reflect"
 	"sync"
 	"text/tabwriter"
 	"text/template"
-	// "log"
 )
 
 // HelpFunc is the signature of a function responsible for printing the help.
 type HelpFunc func(w io.Writer, fs *FlagSet)
-
-var defaultFuncMap = map[string]interface{}{
-	"notZero": func(arg interface{}) bool {
-		switch x := arg.(type) {
-		case reflect.Value:
-			return !reflect.DeepEqual(reflect.Zero(x.Type()).Interface(), x.Interface())
-		default:
-			return !reflect.DeepEqual(reflect.Zero(reflect.TypeOf(arg)), reflect.ValueOf(arg))
-		}
-		panic("Invalid execution path")
-	},
-	"dereflect": func(arg reflect.Value) interface{} {
-		return arg.Interface()
-	},
-}
 
 // Generates a new HelpFunc taking a `text/template.Template`-formatted
 // string as an argument. The resulting template will be executed with the FlagSet
@@ -35,7 +18,7 @@ func NewTemplatedHelpFunc(tpl string) HelpFunc {
 	var t *template.Template
 	return func(w io.Writer, fs *FlagSet) {
 		once.Do(func() {
-			t = template.Must(template.New("helpTemplate").Funcs(defaultFuncMap).Parse(tpl))
+			t = template.Must(template.New("helpTemplate").Parse(tpl))
 		})
 		err := t.Execute(w, fs)
 		if err != nil {
@@ -48,11 +31,11 @@ const (
 	_DEFAULT_HELP = `Usage: {{.Name}} [global options] {{with .Verbs}}<verb> [verb options]{{end}}
 
 Global options:{{range .Flags}}
-	{{with .Short}}-{{.}},{{end}}	{{with .Long}}--{{.}}{{end}}	{{.Description}}{{if notZero .DefaultValue}} (default: {{dereflect .DefaultValue}}){{end}}{{if .Obligatory}} (*){{end}}{{end}}
+	{{with .Short}}-{{.}},{{end}}	{{with .Long}}--{{.}}{{end}}	{{.Description}}{{with .DefaultValue}} (default: {{.}}){{end}}{{if .Obligatory}} (*){{end}}{{end}}
 
 {{with .Verbs}}Verbs:{{range .}}
 	{{.Name}}:{{range .Flags}}
-		{{with .Short}}-{{.}},{{end}}	{{with .Long}}--{{.}}{{end}}	{{.Description}}{{if notZero .DefaultValue}} (default: {{dereflect .DefaultValue}}){{end}}{{if .Obligatory}} (*){{end}}{{end}}{{end}}{{end}}
+		{{with .Short}}-{{.}},{{end}}	{{with .Long}}--{{.}}{{end}}	{{.Description}}{{with .DefaultValue}} (default: {{.}}){{end}}{{if .Obligatory}} (*){{end}}{{end}}{{end}}{{end}}
 
 `
 )
