@@ -16,6 +16,7 @@ func TestParseTag_Minimal(t *testing.T) {
 		Long:        "name",
 		Short:       "n",
 		Description: "Some name",
+		value:       f.value,
 	}
 	if !reflect.DeepEqual(f, expected) {
 		t.Fatalf("Expected %#v, got %#v", expected, f)
@@ -35,6 +36,7 @@ func TestParseTag_More(t *testing.T) {
 		Description: "Some name",
 		MutexGroups: []string{"selector"},
 		Obligatory:  true,
+		value:       f.value,
 	}
 	if !reflect.DeepEqual(f, expected) {
 		t.Fatalf("Expected %#v, got %#v", expected, f)

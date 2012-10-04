@@ -83,11 +83,13 @@ func (f *Flag) Parse(args []string) ([]string, error) {
 			if f.NeedsExtraValue() {
 				value = args[1]
 				args = args[2:]
+			} else {
+				args = args[1:]
 			}
 		}
 	} else {
 		// The parameter is not handled by this flag, do nothing
-		return nil, nil
+		return args, nil
 	}
 
 	if f.WasSpecified && !f.IsMulti() {

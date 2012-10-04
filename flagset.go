@@ -53,6 +53,10 @@ func newFlagset(name string, structValue reflect.Value, parent *FlagSet) *FlagSe
 		parent:   parent,
 	}
 
+	if parent != nil && parent.remainderFlag != nil {
+		r.remainderFlag = parent.remainderFlag
+	}
+
 	var i int
 	// Parse Option fields
 	for i = 0; i < structValue.Type().NumField(); i++ {
@@ -65,7 +69,12 @@ func newFlagset(name string, structValue reflect.Value, parent *FlagSet) *FlagSe
 		if err != nil {
 			panic(fmt.Sprintf("Invalid struct field: %s", err))
 		}
-
+		if fieldValue.Type().Name() == "Help" {
+			r.helpFlag = flag
+		}
+		if fieldValue.Type().Name() == "Remainder" && r.remainderFlag == nil {
+			r.remainderFlag = flag
+		}
 		if len(tag) != 0 {
 			r.Flags = append(r.Flags, flag)
 		}
@@ -104,9 +113,9 @@ func (fs *FlagSet) Parse(args []string) (err error) {
 	}
 
 	// Process verbs
-	if len(args) != 0 {
+	if len(args) > 0 {
 		if verb, ok := fs.Verbs[args[0]]; ok {
-			err := verb.Parse(args)
+			err := verb.Parse(args[1:])
 			if err != nil {
 				return err
 			}
@@ -115,11 +124,13 @@ func (fs *FlagSet) Parse(args []string) (err error) {
 	}
 
 	// Process remainder
-	if len(args) != 0 {
+	if len(args) > 0 {
 		if fs.remainderFlag == nil {
 			return fmt.Errorf("Invalid trailing arguments: %v", args)
 		}
-		reflect.Copy(fs.remainderFlag.value, reflect.ValueOf(args))
+		remainder := reflect.MakeSlice(fs.remainderFlag.value.Type(), len(args), len(args))
+		reflect.Copy(remainder, reflect.ValueOf(args))
+		fs.remainderFlag.value.Set(remainder)
 	}
 
 	// Check for unset, obligatory, single Flags

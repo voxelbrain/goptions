@@ -89,7 +89,7 @@ func TestParse_FlagCluster(t *testing.T) {
 		Crazy   bool `goptions:"-c"`
 		Verbose bool `goptions:"-v"`
 	}
-	args = []string{"-fqcvvv"}
+	args = []string{"-fqcv"}
 	fs = NewFlagSet("goptions", &options)
 	err = fs.Parse(args)
 	if err != nil {
