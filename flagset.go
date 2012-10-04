@@ -66,6 +66,7 @@ func newFlagset(name string, structValue reflect.Value, parent *FlagSet) *FlagSe
 			break
 		}
 		flag, err := parseStructField(fieldValue, tag)
+
 		if err != nil {
 			panic(fmt.Sprintf("Invalid struct field: %s", err))
 		}
@@ -75,6 +76,7 @@ func newFlagset(name string, structValue reflect.Value, parent *FlagSet) *FlagSe
 		if fieldValue.Type().Name() == "Remainder" && r.remainderFlag == nil {
 			r.remainderFlag = flag
 		}
+
 		if len(tag) != 0 {
 			r.Flags = append(r.Flags, flag)
 		}
@@ -100,14 +102,20 @@ var (
 // in the FlagSet's struct.
 func (fs *FlagSet) Parse(args []string) (err error) {
 	for len(args) > 0 {
-		if !((strings.HasPrefix(args[0], "--") && fs.hasLongFlag(args[0][2:])) ||
-			(strings.HasPrefix(args[0], "-") && fs.hasShortFlag(args[0][1:2]))) {
+		if !((isLong(args[0]) && fs.hasLongFlag(args[0][2:])) ||
+			(isShort(args[0]) && fs.hasShortFlag(args[0][1:2]))) {
 			break
 		}
 		for _, f := range fs.Flags {
+			if len(args) <= 0 || !f.Handles(args[0]) {
+				continue
+			}
 			args, err = f.Parse(args)
 			if err != nil {
 				return
+			}
+			if f == fs.helpFlag && f.WasSpecified {
+				return ErrHelpRequest
 			}
 		}
 	}

@@ -57,43 +57,37 @@ func (f *Flag) IsMulti() bool {
 	return false
 }
 
-func (f *Flag) Parse(args []string) ([]string, error) {
-	if len(args) <= 0 {
-		return nil, nil
-	}
-	if f.NeedsExtraValue() && len(args) < 2 {
-		return args, fmt.Errorf("Flag %s needs an argument 1", f.Name())
-	}
-	param, value := args[0], ""
-	if strings.HasPrefix(param, "--") && param[2:] == f.Long {
-		if f.NeedsExtraValue() {
-			value = args[1]
-			args = args[2:]
-		} else {
-			args = args[1:]
-		}
-	} else if strings.HasPrefix(param, "-") && param[1:2] == f.Short {
-		// Is this a short flag cluster?
-		if len(param) > 2 {
-			if f.NeedsExtraValue() {
-				return args, fmt.Errorf("Flag %s needs an argument", f.Name())
-			}
-			args[0] = "-" + param[2:]
-		} else {
-			if f.NeedsExtraValue() {
-				value = args[1]
-				args = args[2:]
-			} else {
-				args = args[1:]
-			}
-		}
-	} else {
-		// The parameter is not handled by this flag, do nothing
-		return args, nil
-	}
+func isShort(arg string) bool {
+	return strings.HasPrefix(arg, "-") && !strings.HasPrefix(arg, "--")
+}
 
+func isLong(arg string) bool {
+	return strings.HasPrefix(arg, "--")
+}
+
+func (f *Flag) Handles(arg string) bool {
+	return (isShort(arg) && arg[1:2] == f.Short) ||
+		(isLong(arg) && arg[2:] == f.Long)
+
+}
+
+func (f *Flag) Parse(args []string) ([]string, error) {
+	param, value := args[0], ""
+	if f.NeedsExtraValue() &&
+		(len(args) < 2 || (isShort(param) && len(param) > 2)) {
+		return args, fmt.Errorf("Flag %s needs an argument", f.Name())
+	}
 	if f.WasSpecified && !f.IsMulti() {
 		return args, fmt.Errorf("Flag %s can only be specified once", f.Name())
+	}
+	if isShort(param) && len(param) > 2 {
+		// Short flag cluster
+		args[0] = "-" + param[2:]
+	} else if f.NeedsExtraValue() {
+		value = args[1]
+		args = args[2:]
+	} else {
+		args = args[1:]
 	}
 	f.WasSpecified = true
 	return args, f.setValue(value)

@@ -3,6 +3,7 @@ package goptions
 import (
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 type optionFunc func(f *Flag, option, value string) error
@@ -23,7 +24,7 @@ var (
 )
 
 func description(f *Flag, option, value string) error {
-	f.Description = value
+	f.Description = strings.Replace(value, `\`, ``, -1)
 	return nil
 }
 
