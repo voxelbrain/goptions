@@ -18,6 +18,8 @@ type FlagSet struct {
 	Name          string
 	helpFlag      *Flag
 	remainderFlag *Flag
+	shortMap      map[string]*Flag
+	longMap       map[string]*Flag
 	// Global option flags
 	Flags []*Flag
 	// Verbs and corresponding FlagSets
@@ -91,6 +93,7 @@ func newFlagset(name string, structValue reflect.Value, parent *FlagSet) *FlagSe
 		tag := structValue.Type().Field(i).Tag.Get("goptions")
 		r.Verbs[tag] = newFlagset(tag, fieldValue, r)
 	}
+	r.createMaps()
 	return r
 }
 
@@ -101,22 +104,19 @@ var (
 // Parse takes the command line arguments and sets the corresponding values
 // in the FlagSet's struct.
 func (fs *FlagSet) Parse(args []string) (err error) {
+	// Parse global flags
 	for len(args) > 0 {
 		if !((isLong(args[0]) && fs.hasLongFlag(args[0][2:])) ||
 			(isShort(args[0]) && fs.hasShortFlag(args[0][1:2]))) {
 			break
 		}
-		for _, f := range fs.Flags {
-			if len(args) <= 0 || !f.Handles(args[0]) {
-				continue
-			}
-			args, err = f.Parse(args)
-			if err != nil {
-				return
-			}
-			if f == fs.helpFlag && f.WasSpecified {
-				return ErrHelpRequest
-			}
+		f := fs.FlagByName(args[0])
+		args, err = f.Parse(args)
+		if err != nil {
+			return
+		}
+		if f == fs.helpFlag && f.WasSpecified {
+			return ErrHelpRequest
 		}
 	}
 
@@ -159,22 +159,32 @@ func (fs *FlagSet) Parse(args []string) (err error) {
 	return nil
 }
 
-func (fs *FlagSet) hasLongFlag(fname string) bool {
+func (fs *FlagSet) createMaps() {
+	fs.longMap = make(map[string]*Flag)
+	fs.shortMap = make(map[string]*Flag)
 	for _, flag := range fs.Flags {
-		if flag.Long == fname {
-			return true
-		}
+		fs.longMap[flag.Long] = flag
+		fs.shortMap[flag.Short] = flag
 	}
-	return false
+}
+
+func (fs *FlagSet) hasLongFlag(fname string) bool {
+	_, ok := fs.longMap[fname]
+	return ok
 }
 
 func (fs *FlagSet) hasShortFlag(fname string) bool {
-	for _, flag := range fs.Flags {
-		if flag.Short == fname {
-			return true
-		}
+	_, ok := fs.shortMap[fname]
+	return ok
+}
+
+func (fs *FlagSet) FlagByName(fname string) *Flag {
+	if isShort(fname) && fs.hasShortFlag(fname[1:2]) {
+		return fs.shortMap[fname[1:2]]
+	} else if isLong(fname) && fs.hasLongFlag(fname[2:]) {
+		return fs.longMap[fname[2:]]
 	}
-	return false
+	return nil
 }
 
 // MutexGroups returns a map of Flag lists which contain mutually
