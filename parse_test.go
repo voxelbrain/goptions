@@ -311,3 +311,25 @@ func TestParse_ObligatoryMutexGroup(t *testing.T) {
 		t.Fatalf("Parsing failed: %s", err)
 	}
 }
+
+func TestParse_Array(t *testing.T) {
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Servers []string `goptions:"-s"`
+	}
+
+	args = []string{"-s", "server1", "-s", "server2", "-s", "server3"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err != nil {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+	if !(len(options.Servers) == 3 &&
+		options.Servers[0] == "server1" &&
+		options.Servers[1] == "server2" &&
+		options.Servers[2] == "server3") {
+		t.Fatalf("Unexpected value: %#v", options)
+	}
+}
