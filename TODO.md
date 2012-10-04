@@ -1,5 +1,6 @@
 TODO
 ====
 
-* Long flags with `=` (e.g. `--name=SomeName`)
-* Type support for more than just strings
+* Make default values available in template context
+* Support os.File as type
+* Support arrays for multiple definitions

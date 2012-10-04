@@ -92,7 +92,6 @@ type valueParser func(v reflect.Value, val string) error
 var (
 	parserMap = map[reflect.Type]valueParser{
 		reflect.TypeOf(new(bool)).Elem():   boolValueParser,
-		reflect.TypeOf(new(bool)).Elem():   boolValueParser,
 		reflect.TypeOf(new(string)).Elem(): stringValueParser,
 		reflect.TypeOf(new(int)).Elem():    intValueParser,
 		reflect.TypeOf(new(Help)).Elem():   helpValueParser,
@@ -106,8 +105,15 @@ func (f *Flag) setValue(s string) (err error) {
 			return
 		}
 	}()
-	if m, ok := f.value.Interface().(Marshaler); ok {
-		return m.MarshalGoption(s)
+	if _, ok := f.value.Interface().(Marshaler); ok {
+		newval := reflect.New(f.value.Type()).Elem()
+		if newval.Kind() == reflect.Ptr {
+			newptrval := reflect.New(f.value.Type().Elem())
+			newval.Set(newptrval)
+		}
+		err := newval.Interface().(Marshaler).MarshalGoption(s)
+		f.value.Set(newval)
+		return err
 	}
 	if parser, ok := parserMap[f.value.Type()]; ok {
 		return parser(f.value, s)

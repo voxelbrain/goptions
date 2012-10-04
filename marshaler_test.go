@@ -1,12 +1,11 @@
 package goptions
 
 import (
-// "fmt"
-// "strings"
-// "testing"
+	"fmt"
+	"strings"
+	"testing"
 )
 
-/*
 type Name struct {
 	FirstName string
 	LastName  string
@@ -32,10 +31,11 @@ func TestMarshaler(t *testing.T) {
 	args = []string{"--name", "Alexander Surma"}
 	fs = NewFlagSet("goptions", &options)
 	err = fs.Parse(args)
-	if err != nil ||
-		options.Name.FirstName != "Alexander" ||
+	if err != nil {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+	if options.Name.FirstName != "Alexander" ||
 		options.Name.LastName != "Surma" {
 		t.Fatalf("Unexpected value: %#v", options)
 	}
 }
-*/
