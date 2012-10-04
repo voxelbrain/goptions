@@ -17,9 +17,6 @@ var (
 			"obligatory":  obligatory,
 			"mutexgroup":  mutexgroup,
 		},
-		typeInt: optionMap{
-			"accumulate": accumulate,
-		},
 	}
 )
 
@@ -37,11 +34,9 @@ func mutexgroup(f *Flag, option, value string) error {
 	if len(value) <= 0 {
 		return fmt.Errorf("Mutexgroup option needs a value")
 	}
-	f.MutexGroups = append(f.MutexGroups, value)
-	return nil
-}
-
-func accumulate(f *Flag, option, value string) error {
+	for _, group := range strings.Split(value, ",") {
+		f.MutexGroups = append(f.MutexGroups, group)
+	}
 	return nil
 }
 

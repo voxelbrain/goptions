@@ -18,12 +18,6 @@ type Flag struct {
 	value        reflect.Value
 }
 
-var (
-	typeBool   = reflect.TypeOf(bool(false))
-	typeString = reflect.TypeOf(string("string"))
-	typeInt    = reflect.TypeOf(int(0))
-)
-
 // Return the name of the flag preceding the right amount of dashes.
 // The long name is preferred. If no name has been specified, "<unspecified>"
 // will be returned.
@@ -40,7 +34,7 @@ func (f *Flag) Name() string {
 // NeedsExtraValue returns true if the flag expects a separate value.
 func (f *Flag) NeedsExtraValue() bool {
 	// Explicit over implicit
-	if f.value.Type() == typeBool {
+	if f.value.Type() == reflect.TypeOf(new(bool)).Elem() {
 		return false
 	}
 	if _, ok := f.value.Interface().(Help); ok {
@@ -93,6 +87,18 @@ func (f *Flag) Parse(args []string) ([]string, error) {
 	return args, f.setValue(value)
 }
 
+type valueParser func(v reflect.Value, val string) error
+
+var (
+	parserMap = map[reflect.Type]valueParser{
+		reflect.TypeOf(new(bool)).Elem():   boolValueParser,
+		reflect.TypeOf(new(bool)).Elem():   boolValueParser,
+		reflect.TypeOf(new(string)).Elem(): stringValueParser,
+		reflect.TypeOf(new(int)).Elem():    intValueParser,
+		reflect.TypeOf(new(Help)).Elem():   helpValueParser,
+	}
+)
+
 func (f *Flag) setValue(s string) (err error) {
 	defer func() {
 		if x := recover(); x != nil {
@@ -102,84 +108,34 @@ func (f *Flag) setValue(s string) (err error) {
 	}()
 	if m, ok := f.value.Interface().(Marshaler); ok {
 		return m.MarshalGoption(s)
-	} else if _, ok := f.value.Interface().(Help); ok {
-		return ErrHelpRequest
-	} else if f.value.Type() == typeBool {
-		f.value.Set(reflect.ValueOf(true))
-	} else if f.value.Type() == typeString {
-		f.value.Set(reflect.ValueOf(s))
-	} else if f.value.Type() == typeInt {
-		intval, err := strconv.ParseInt(s, 10, 64)
-		if err != nil {
-			return err
-		}
-		f.value.Set(reflect.ValueOf(int(intval)))
+	}
+	if parser, ok := parserMap[f.value.Type()]; ok {
+		return parser(f.value, s)
 	} else {
 		return fmt.Errorf("Unsupported flag type: %s", f.value.Type().Name())
 	}
-	return
+	panic("Invalid execution path")
 }
 
-// Old
-/*
-func (f *Flag) set() {
-	f.WasSpecified = true
-	if f.value.Kind() == reflect.Bool {
-		f.setValue(true)
-	} else if f.value.Kind() == reflect.Int && f.Accumulate {
-		f.setValue(f.value.Interface().(int) + 1)
-	}
-}
-
-func (f *Flag) setLong() {
-	f.WasSpecifiedLong = true
-	f.set()
-}
-func (f *Flag) setShort() {
-	f.WasSpecifiedLong = false
-	f.set()
-}
-
-func (f *Flag) setStringValue(val string) (err error) {
-	switch f.value.Interface().(type) {
-	case Marshaler:
-		newval := reflect.New(f.value.Type()).Elem()
-		if newval.Kind() == reflect.Ptr {
-			newptrval := reflect.New(f.value.Type().Elem())
-			newval.Set(newptrval)
-		}
-		err := newval.Interface().(Marshaler).MarshalGoption(val)
-		f.value.Set(newval)
-		return err
-	case int:
-		intval, err := strconv.ParseInt(val, 10, 64)
-		if err != nil {
-			return err
-		}
-		return f.setValue(int(intval))
-	case float64:
-		intval, err := strconv.ParseFloat(val, 64)
-		if err != nil {
-			return err
-		}
-		return f.setValue(intval)
-	default:
-		return f.setValue(val)
-	}
+func boolValueParser(v reflect.Value, val string) error {
+	v.Set(reflect.ValueOf(true))
 	return nil
 }
 
-func (f *Flag) setValue(v interface{}) (err error) {
-	defer func() {
-		if x := recover(); x != nil {
-			if str, ok := x.(string); ok {
-				err = errors.New(str)
-				return
-			}
-			err = x.(error)
-		}
-	}()
-	f.value.Set(reflect.ValueOf(v))
-	return
+func stringValueParser(v reflect.Value, val string) error {
+	v.Set(reflect.ValueOf(val))
+	return nil
 }
-*/
+
+func intValueParser(v reflect.Value, val string) error {
+	intval, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		return err
+	}
+	v.Set(reflect.ValueOf(int(intval)))
+	return nil
+}
+
+func helpValueParser(v reflect.Value, val string) error {
+	return ErrHelpRequest
+}
