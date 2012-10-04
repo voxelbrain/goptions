@@ -87,7 +87,7 @@ func (f *Flag) Parse(args []string) ([]string, error) {
 	return args, f.setValue(value)
 }
 
-type valueParser func(v reflect.Value, val string) error
+type valueParser func(val string) (reflect.Value, error)
 
 var (
 	parserMap = map[reflect.Type]valueParser{
@@ -115,33 +115,40 @@ func (f *Flag) setValue(s string) (err error) {
 		f.value.Set(newval)
 		return err
 	}
-	if parser, ok := parserMap[f.value.Type()]; ok {
-		return parser(f.value, s)
+	vtype := f.value.Type()
+	if f.value.Kind() == reflect.Slice {
+		vtype = f.value.Type().Elem()
+	}
+	if parser, ok := parserMap[vtype]; ok {
+		val, err := parser(s)
+		if err != nil {
+			return err
+		}
+		if f.value.Kind() == reflect.Slice {
+			f.value.Set(reflect.Append(f.value, val))
+		} else {
+			f.value.Set(val)
+		}
+		return nil
 	} else {
 		return fmt.Errorf("Unsupported flag type: %s", f.value.Type().Name())
 	}
 	panic("Invalid execution path")
 }
 
-func boolValueParser(v reflect.Value, val string) error {
-	v.Set(reflect.ValueOf(true))
-	return nil
+func boolValueParser(val string) (reflect.Value, error) {
+	return reflect.ValueOf(true), nil
 }
 
-func stringValueParser(v reflect.Value, val string) error {
-	v.Set(reflect.ValueOf(val))
-	return nil
+func stringValueParser(val string) (reflect.Value, error) {
+	return reflect.ValueOf(val), nil
 }
 
-func intValueParser(v reflect.Value, val string) error {
+func intValueParser(val string) (reflect.Value, error) {
 	intval, err := strconv.ParseInt(val, 10, 64)
-	if err != nil {
-		return err
-	}
-	v.Set(reflect.ValueOf(int(intval)))
-	return nil
+	return reflect.ValueOf(int(intval)), err
 }
 
-func helpValueParser(v reflect.Value, val string) error {
-	return ErrHelpRequest
+func helpValueParser(val string) (reflect.Value, error) {
+	return reflect.Value{}, ErrHelpRequest
 }
