@@ -16,6 +16,7 @@ type Flag struct {
 	Obligatory   bool
 	WasSpecified bool
 	value        reflect.Value
+	DefaultValue reflect.Value
 }
 
 // Return the name of the flag preceding the right amount of dashes.
