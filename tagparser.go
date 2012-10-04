@@ -20,7 +20,8 @@ var (
 
 func parseStructField(fieldValue reflect.Value, tag string) (*Flag, error) {
 	f := &Flag{
-		value: fieldValue,
+		value:        fieldValue,
+		DefaultValue: fieldValue.Interface(),
 	}
 	for {
 		tag = strings.TrimSpace(tag)
