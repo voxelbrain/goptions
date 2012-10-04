@@ -1,6 +1,7 @@
 package goptions
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -8,7 +9,7 @@ func ExampleFlagSet_PrintHelp() {
 	var options struct {
 		Server    string `goptions:"-s, --server, obligatory, description='Server to connect to'"`
 		Password  string `goptions:"-p, --password, description='Don\\'t prompt for password'"`
-		Verbosity int    `goptions:"-v, --verbose, accumulate, description='Set output threshold level'"`
+		Verbosity int    `goptions:"-v, --verbose, description='Be verbose'"`
 		Help      `goptions:"-h, --help, description='Show this help'"`
 
 		Verbs
@@ -30,7 +31,7 @@ func ExampleFlagSet_PrintHelp() {
 		fs.PrintHelp(os.Stderr)
 		return
 	} else if err != nil {
-		panic(err)
+		fmt.Printf("Failure: %s", err)
 	}
 
 	// Output:
@@ -39,7 +40,7 @@ func ExampleFlagSet_PrintHelp() {
 	// Global options:
 	//     -s, --server   Server to connect to (*)
 	//     -p, --password Don't prompt for password
-	//     -v, --verbose  Set output threshold level
+	//     -v, --verbose  Be verbose
 	//     -h, --help     Show this help
 	//
 	// Verbs:

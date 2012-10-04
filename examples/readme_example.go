@@ -8,7 +8,7 @@ func main() {
 	options := struct {
 		Server        string `goptions:"-s, --server, description='Server to connect to'"`
 		Password      string `goptions:"-p, --password, description='Don\\'t prompt for password'"`
-		Verbosity     int    `goptions:"-v, --verbose, accumulate, description='Set output threshold level'"`
+		Verbosity     int    `goptions:"-v, --verbose, description='Be verbose'"`
 		goptions.Help `goptions:"-h, --help, description='Show this help'"`
 
 		goptions.Verbs
