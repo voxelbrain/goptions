@@ -353,4 +353,5 @@ func TestParse_File(t *testing.T) {
 		t.Fatalf("Unexpected value: %#v", options)
 	}
 	options.Output.Close()
+	os.Remove("testfile")
 }
