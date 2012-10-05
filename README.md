@@ -11,53 +11,50 @@ package main
 
 import (
 	"github.com/voxelbrain/goptions"
+	"os"
 )
 
 func main() {
 	options := struct {
-		Server    string `goptions:"-s, --server, obligatory, description='Server to connect to'"`
-		Password  string `goptions:"-p, --password, description='Don\\'t prompt for password'"`
-		Verbosity int    `goptions:"-v, --verbose, description='Be verbose'"`
-		Timeout   int    `goptions:"-t, --timeout, description='Connection timeout in seconds'"`
-		Help      `goptions:"-h, --help, description='Show this help'"`
+		Server        string `goptions:"-s, --server, obligatory, description='Server to connect to'"`
+		Password      string `goptions:"-p, --password, description='Don\\'t prompt for password'"`
+		Timeout       int    `goptions:"-t, --timeout, description='Connection timeout in seconds'"`
+		goptions.Help `goptions:"-h, --help, description='Show this help'"`
 
-		Verbs
-		Create struct {
-			Name      string `goptions:"-n, --name, obligatory, description='Name of the entity to be created'"`
-			Directory bool   `goptions:"--directory, mutexgroup='type', description='Create a directory'"`
-			File      bool   `goptions:"--file, mutexgroup='type', description='Create a file'"`
-		} `goptions:"create"`
+		goptions.Verbs
+		Execute struct {
+			Command string   `goptions:"--command, mutexgroup='input', description='Command to exectute', obligatory"`
+			Script  *os.File `goptions:"--script, mutexgroup='input', description='Script to execture', create, wronly, append"`
+		} `goptions:"execute"`
 		Delete struct {
-			Name      string `goptions:"-n, --name, obligatory, description='Name of the entity to be deleted'"`
-			Directory bool   `goptions:"--directory, mutexgroup='type', description='Delete a directory'"`
-			File      bool   `goptions:"--file, mutexgroup='type', description='Delete a file'"`
+			Path  string `goptions:"-n, --name, obligatory, description='Name of the entity to be deleted'"`
+			Force bool   `goptions:"-f, --force, description='Force removal'"`
 		} `goptions:"delete"`
 	}{ // Default values goes here
 		Timeout: 10,
 	}
 	goptions.ParseAndFail(&options)
 }
+```
 
-// Help Output:
-// Usage: goptions [global options] <verb> [verb options]
-//
-// Global options:
-//     -s, --server   Server to connect to (*)
-//     -p, --password Don't prompt for password
-//     -v, --verbose  Be verbose
-//     -t, --timeout  Connection timeout in seconds (default: 10)
-//     -h, --help     Show this help
-//
-// Verbs:
-//     create:
-//         -n, --name      Name of the entity to be created (*)
-//             --directory Create a directory
-//             --file      Create a file
-//     delete:
-//         -n, --name      Name of the entity to be deleted (*)
-//             --directory Delete a directory
-//             --file      Delete a file
+```
+$ go run examples/readme_example.go --help
+Usage: a.out [global options] <verb> [verb options]
+
+Global options:
+    -s, --server   Server to connect to (*)
+    -p, --password Don't prompt for password
+    -t, --timeout  Connection timeout in seconds (default: 10)
+    -h, --help     Show this help
+
+Verbs:
+    delete:
+        -n, --name  Name of the entity to be deleted (*)
+        -f, --force Force removal
+    execute:
+            --command Command to exectute (*)
+            --script  Script to execture
 ```
 
 ---
-Version 1.3.4
+Version 2.0.0
