@@ -1,5 +1,6 @@
 TODO
 ====
 
-* Long flags with `=` (e.g. `--name=SomeName`)
-* Type support for more than just strings
+* Possibility to make selection of a verb obligatory
+* Feedback which verb has been selected
+* Represent MutexGroups in HelpOutput
