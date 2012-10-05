@@ -15,6 +15,7 @@ type Flag struct {
 	Obligatory   bool
 	WasSpecified bool
 	value        reflect.Value
+	optionMeta   map[string]interface{}
 	DefaultValue interface{}
 }
 

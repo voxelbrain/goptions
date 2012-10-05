@@ -22,6 +22,7 @@ func parseStructField(fieldValue reflect.Value, tag string) (*Flag, error) {
 	f := &Flag{
 		value:        fieldValue,
 		DefaultValue: fieldValue.Interface(),
+		optionMeta:   make(map[string]interface{}),
 	}
 	for {
 		tag = strings.TrimSpace(tag)

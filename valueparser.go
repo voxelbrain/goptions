@@ -2,18 +2,20 @@ package goptions
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 )
 
-type valueParser func(val string) (reflect.Value, error)
+type valueParser func(f *Flag, val string) (reflect.Value, error)
 
 var (
 	parserMap = map[reflect.Type]valueParser{
-		reflect.TypeOf(new(bool)).Elem():   boolValueParser,
-		reflect.TypeOf(new(string)).Elem(): stringValueParser,
-		reflect.TypeOf(new(int)).Elem():    intValueParser,
-		reflect.TypeOf(new(Help)).Elem():   helpValueParser,
+		reflect.TypeOf(new(bool)).Elem():     boolValueParser,
+		reflect.TypeOf(new(string)).Elem():   stringValueParser,
+		reflect.TypeOf(new(int)).Elem():      intValueParser,
+		reflect.TypeOf(new(Help)).Elem():     helpValueParser,
+		reflect.TypeOf(new(*os.File)).Elem(): fileValueParser,
 	}
 )
 
@@ -39,7 +41,7 @@ func (f *Flag) setValue(s string) (err error) {
 		vtype = f.value.Type().Elem()
 	}
 	if parser, ok := parserMap[vtype]; ok {
-		val, err := parser(s)
+		val, err := parser(f, s)
 		if err != nil {
 			return err
 		}
@@ -55,19 +57,41 @@ func (f *Flag) setValue(s string) (err error) {
 	panic("Invalid execution path")
 }
 
-func boolValueParser(val string) (reflect.Value, error) {
+func boolValueParser(f *Flag, val string) (reflect.Value, error) {
 	return reflect.ValueOf(true), nil
 }
 
-func stringValueParser(val string) (reflect.Value, error) {
+func stringValueParser(f *Flag, val string) (reflect.Value, error) {
 	return reflect.ValueOf(val), nil
 }
 
-func intValueParser(val string) (reflect.Value, error) {
+func intValueParser(f *Flag, val string) (reflect.Value, error) {
 	intval, err := strconv.ParseInt(val, 10, 64)
 	return reflect.ValueOf(int(intval)), err
 }
 
-func helpValueParser(val string) (reflect.Value, error) {
+func fileValueParser(f *Flag, val string) (reflect.Value, error) {
+	mode := 0
+	if v, ok := f.optionMeta["file_mode"].(int); ok {
+		mode = v
+	}
+	if val == "-" {
+		if mode&os.O_RDONLY > 0 {
+			return reflect.ValueOf(os.Stdin), nil
+		} else if mode&os.O_WRONLY > 0 {
+			return reflect.ValueOf(os.Stdout), nil
+		}
+	} else {
+		perm := uint32(0644)
+		if v, ok := f.optionMeta["file_perm"].(uint32); ok {
+			perm = v
+		}
+		f, e := os.OpenFile(val, mode, os.FileMode(perm))
+		return reflect.ValueOf(f), e
+	}
+	panic("Invalid execution path")
+}
+
+func helpValueParser(f *Flag, val string) (reflect.Value, error) {
 	return reflect.Value{}, ErrHelpRequest
 }

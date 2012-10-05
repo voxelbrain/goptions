@@ -1,6 +1,7 @@
 package goptions
 
 import (
+	"os"
 	"testing"
 )
 
@@ -332,4 +333,24 @@ func TestParse_Array(t *testing.T) {
 		options.Servers[2] == "server3") {
 		t.Fatalf("Unexpected value: %#v", options)
 	}
+}
+
+func TestParse_File(t *testing.T) {
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Output *os.File `goptions:"-o, create, trunc, wronly"`
+	}
+
+	args = []string{"-o", "testfile"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err != nil {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+	if !(options.Output != nil) {
+		t.Fatalf("Unexpected value: %#v", options)
+	}
+	options.Output.Close()
 }

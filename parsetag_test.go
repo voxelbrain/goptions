@@ -13,13 +13,11 @@ func TestParseTag_Minimal(t *testing.T) {
 		t.Fatalf("Tag parsing failed: %s", e)
 	}
 	expected := &Flag{
-		Long:         "name",
-		Short:        "n",
-		Description:  "Some name",
-		value:        f.value,
-		DefaultValue: f.DefaultValue,
+		Long:        "name",
+		Short:       "n",
+		Description: "Some name",
 	}
-	if !reflect.DeepEqual(f, expected) {
+	if !flagequal(f, expected) {
 		t.Fatalf("Expected %#v, got %#v", expected, f)
 	}
 }
@@ -32,15 +30,13 @@ func TestParseTag_More(t *testing.T) {
 		t.Fatalf("Tag parsing failed: %s", e)
 	}
 	expected := &Flag{
-		Long:         "name",
-		Short:        "n",
-		Description:  "Some name",
-		MutexGroups:  []string{"selector"},
-		Obligatory:   true,
-		value:        f.value,
-		DefaultValue: f.DefaultValue,
+		Long:        "name",
+		Short:       "n",
+		Description: "Some name",
+		MutexGroups: []string{"selector"},
+		Obligatory:  true,
 	}
-	if !reflect.DeepEqual(f, expected) {
+	if !flagequal(f, expected) {
 		t.Fatalf("Expected %#v, got %#v", expected, f)
 	}
 }
@@ -59,4 +55,13 @@ func TestParseTag_MultipleFlags(t *testing.T) {
 	if e == nil {
 		t.Fatalf("Parsing should have failed")
 	}
+}
+
+func flagequal(f1, f2 *Flag) bool {
+	return f1.Short == f2.Short &&
+		f1.Long == f2.Long &&
+		reflect.DeepEqual(f1.MutexGroups, f2.MutexGroups) &&
+		f1.Description == f2.Description &&
+		f1.Obligatory == f2.Obligatory &&
+		f1.WasSpecified == f2.WasSpecified
 }
