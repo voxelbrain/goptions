@@ -8,29 +8,40 @@ by the tags in a (possibly anonymous) struct.
     var options struct {
     	Name string `goptions:"-n, --name"`
     	Force bool `goptions:"-f, --force"`
-    	Verbosity int `goptions:"-v, --verbose, accumulate"`
+    	Verbosity int `goptions:"-v, --verbose"`
     }
 
 Short flags can be combined (e.g. `-nfv`). Long flags take their value after a
 separating space. The equals notation (`--long-flag=value`) is NOT supported
 right now.
 
-Every member of the struct, which is supposed to catch a command line value
-has to have a "goptions" tag. Multiple short and long flag names can be specified.
-Each tag can also list any number of the following options:
+Every member of the struct which is supposed to catch a command line value
+has to have a "goptions" tag. The contains the short and long flag names for this
+member but can additionally specify any of these options below.
 
-    accumulate        - (Only valid for `int`) Counts how of then the flag has been
-                        specified in the short version. The long version simply
-                        accepts an int.
     obligatory        - Flag must be specified. Otherwise an error will be returned
                         when Parse() is called.
     description='...' - Set the description for this particular flag. Will be
                         used by the HelpFunc.
-    mutexgroup='...'  - Sets the name of the MutexGroup. Only one flag of the
+    mutexgroup='...'  - Add this flag to a MutexGroup. Only one flag of the
                         ones sharing a MutexGroup can be set. Otherwise an error
                         will be returned when Parse() is called. If one flag in a
                         MutexGroup is `obligatory` one flag of the group must be
-                        specified.
+                        specified. A flag can be in multiple MutexGroups at once.
+
+Depending on the type of the struct member, additional options might become available:
+
+    Type: *os.File
+        The given string is interpreted as a path to a file. If the string is "-"
+        os.Stdin or os.Stdout will be used. os.Stdin will be returned, if the
+        `rdonly` flag was set. os.Stdout will be returned, if `wronly` was set.
+    Available options:
+        Any combination of create, append, rdonly, wronly, rdwr,
+        excl, sync, trunc and perm can be specified and correspond directly with
+        the combination of the homonymous flags in the os package.
+
+If a member is a slice type, multiple definitions of the flags are possible. For each
+specification the underlying type will be used.
 
 goptions also has support for verbs. Each verb accepts its own set of flags which
 take exactly the same tag format as global options. For an usage example of verbs
@@ -52,7 +63,7 @@ var (
 	globalFlagSet *FlagSet
 )
 
-// ParseAndFail is a convenience function to parse tos.Args[1:] and print
+// ParseAndFail is a convenience function to parse os.Args[1:] and print
 // the help if an error occurs. This should cover 90% of this library's
 // applications.
 func ParseAndFail(v interface{}) {
