@@ -166,7 +166,8 @@ func TestParse_Verbs(t *testing.T) {
 	}
 
 	if !(options.Server == "127.0.0.1" &&
-		options.Create.Name == "SomeDocument") {
+		options.Create.Name == "SomeDocument" &&
+		options.Verbs == "create") {
 		t.Fatalf("Unexpected value: %v", options)
 	}
 }
@@ -238,7 +239,8 @@ func TestParse_VerbRemainder(t *testing.T) {
 
 	if !(len(options.Remainder) == 2 &&
 		options.Remainder[0] == "Something" &&
-		options.Remainder[1] == "SomethingElse") {
+		options.Remainder[1] == "SomethingElse" &&
+		options.Verbs == "create") {
 		t.Fatalf("Unexpected value: %v", options)
 	}
 }
