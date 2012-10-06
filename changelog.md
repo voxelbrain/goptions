@@ -1,3 +1,10 @@
+# 2.1.0
+
+# New features
+
+* `goptions.Verbs` is of type `string` and will have selected verb name as value
+  after parsing.
+
 # 2.0.0
 
 
