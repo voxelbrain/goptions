@@ -4,8 +4,9 @@ package goptions
 // Parse() to return ErrHelpRequest.
 type Help bool
 
-// Verbs marks the point in the struct where the verbs start.
-type Verbs interface{}
+// Verbs marks the point in the struct where the verbs start. Its value will be
+// the name of the selected verb.
+type Verbs string
 
 // A remainder catches all excessive arguments. If both a verb and
 // the containing options struct have a remainder field, only the latter one

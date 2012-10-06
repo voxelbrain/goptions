@@ -20,6 +20,7 @@ type FlagSet struct {
 	remainderFlag *Flag
 	shortMap      map[string]*Flag
 	longMap       map[string]*Flag
+	verbFlag      *Flag
 	// Global option flags
 	Flags []*Flag
 	// Verbs and corresponding FlagSets
@@ -64,13 +65,14 @@ func newFlagset(name string, structValue reflect.Value, parent *FlagSet) *FlagSe
 	for i = 0; i < structValue.Type().NumField(); i++ {
 		fieldValue := structValue.Field(i)
 		tag := structValue.Type().Field(i).Tag.Get("goptions")
-		if fieldValue.Type().Name() == "Verbs" {
-			break
-		}
 		flag, err := parseStructField(fieldValue, tag)
 
 		if err != nil {
 			panic(fmt.Sprintf("Invalid struct field: %s", err))
+		}
+		if fieldValue.Type().Name() == "Verbs" {
+			r.verbFlag = flag
+			break
 		}
 		if fieldValue.Type().Name() == "Help" {
 			r.helpFlag = flag
@@ -120,9 +122,10 @@ func (fs *FlagSet) Parse(args []string) (err error) {
 		}
 	}
 
-	// Process verbs
+	// Process verb
 	if len(args) > 0 {
 		if verb, ok := fs.Verbs[args[0]]; ok {
+			fs.verbFlag.value.Set(reflect.ValueOf(Verbs(args[0])))
 			err := verb.Parse(args[1:])
 			if err != nil {
 				return err
