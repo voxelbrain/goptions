@@ -1,3 +1,14 @@
+# 2.2.0
+
+# New features
+
+* Add support for `*net.TCPAddr`
+* Add support for `*net/url.URL`
+
+# Bugfixes
+
+* Fix behaviour of `[]bool` fields
+
 # 2.1.0
 
 # New features
