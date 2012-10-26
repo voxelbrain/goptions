@@ -2,6 +2,8 @@ package goptions
 
 import (
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"testing"
 )
@@ -432,4 +434,44 @@ func TestParse_File(t *testing.T) {
 	}
 	options.Output.Close()
 	os.Remove("testfile")
+}
+
+func TestParse_TCPAddr(t *testing.T) {
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Server *net.TCPAddr `goptions:"-a"`
+	}
+
+	args = []string{"-a", "192.168.0.100:8080"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err != nil {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+	if !(options.Server.IP.String() == "192.168.0.100" &&
+		options.Server.Port == 8080) {
+		t.Fatalf("Unexpected value: %#v", options)
+	}
+}
+
+func TestParse_URL(t *testing.T) {
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Server *url.URL `goptions:"-a"`
+	}
+
+	args = []string{"-a", "http://www.google.com"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err != nil {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+	if !(options.Server.Scheme == "http" &&
+		options.Server.Host == "www.google.com") {
+		t.Fatalf("Unexpected value: %#v", options.Server)
+	}
 }
