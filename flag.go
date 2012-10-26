@@ -35,7 +35,8 @@ func (f *Flag) Name() string {
 // NeedsExtraValue returns true if the flag expects a separate value.
 func (f *Flag) NeedsExtraValue() bool {
 	// Explicit over implicit
-	if f.value.Type() == reflect.TypeOf(new(bool)).Elem() {
+	if f.value.Type() == reflect.TypeOf(new([]bool)).Elem() ||
+		f.value.Type() == reflect.TypeOf(new(bool)).Elem() {
 		return false
 	}
 	if _, ok := f.value.Interface().(Help); ok {
