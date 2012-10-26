@@ -2,6 +2,8 @@ package goptions
 
 import (
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"reflect"
 	"strconv"
@@ -11,11 +13,13 @@ type valueParser func(f *Flag, val string) (reflect.Value, error)
 
 var (
 	parserMap = map[reflect.Type]valueParser{
-		reflect.TypeOf(new(bool)).Elem():     boolValueParser,
-		reflect.TypeOf(new(string)).Elem():   stringValueParser,
-		reflect.TypeOf(new(int)).Elem():      intValueParser,
-		reflect.TypeOf(new(Help)).Elem():     helpValueParser,
-		reflect.TypeOf(new(*os.File)).Elem(): fileValueParser,
+		reflect.TypeOf(new(bool)).Elem():         boolValueParser,
+		reflect.TypeOf(new(string)).Elem():       stringValueParser,
+		reflect.TypeOf(new(int)).Elem():          intValueParser,
+		reflect.TypeOf(new(Help)).Elem():         helpValueParser,
+		reflect.TypeOf(new(*os.File)).Elem():     fileValueParser,
+		reflect.TypeOf(new(*net.TCPAddr)).Elem(): tcpAddrValueParser,
+		reflect.TypeOf(new(*url.URL)).Elem():     urlValueParser,
 	}
 )
 
@@ -90,6 +94,16 @@ func fileValueParser(f *Flag, val string) (reflect.Value, error) {
 		return reflect.ValueOf(f), e
 	}
 	panic("Invalid execution path")
+}
+
+func tcpAddrValueParser(f *Flag, val string) (reflect.Value, error) {
+	addr, err := net.ResolveTCPAddr("tcp", val)
+	return reflect.ValueOf(addr), err
+}
+
+func urlValueParser(f *Flag, val string) (reflect.Value, error) {
+	url, err := url.Parse(val)
+	return reflect.ValueOf(url), err
 }
 
 func helpValueParser(f *Flag, val string) (reflect.Value, error) {

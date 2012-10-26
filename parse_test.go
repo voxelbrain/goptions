@@ -1,6 +1,9 @@
 package goptions
 
 import (
+	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"testing"
 )
@@ -315,7 +318,7 @@ func TestParse_ObligatoryMutexGroup(t *testing.T) {
 	}
 }
 
-func TestParse_Array(t *testing.T) {
+func TestParse_StringArray_Short(t *testing.T) {
 	var args []string
 	var err error
 	var fs *FlagSet
@@ -323,17 +326,92 @@ func TestParse_Array(t *testing.T) {
 		Servers []string `goptions:"-s"`
 	}
 
-	args = []string{"-s", "server1", "-s", "server2", "-s", "server3"}
-	fs = NewFlagSet("goptions", &options)
-	err = fs.Parse(args)
-	if err != nil {
-		t.Fatalf("Parsing failed: %s", err)
+	args = []string{}
+	for i := 1; i < 10; i++ {
+		options.Servers = []string{}
+		args = append(args, []string{"-s", fmt.Sprintf("server%d", i)}...)
+		fs = NewFlagSet("goptions", &options)
+		err = fs.Parse(args)
+		if err != nil {
+			t.Fatalf("Parsing failed at %d: %s", i, err)
+		}
+		if len(options.Servers) != i {
+			t.Fatalf("Unexpected number of values. Expected %d, got %d (%#v)", i, len(options.Servers), options.Servers)
+		}
+		for j := 0; j < i; j++ {
+			expected := fmt.Sprintf("server%d", j+1)
+			if options.Servers[j] != expected {
+				t.Fatalf("Unexpected value. %#v", options.Servers)
+			}
+		}
 	}
-	if !(len(options.Servers) == 3 &&
-		options.Servers[0] == "server1" &&
-		options.Servers[1] == "server2" &&
-		options.Servers[2] == "server3") {
-		t.Fatalf("Unexpected value: %#v", options)
+}
+
+func TestParse_BoolArray_Cluster(t *testing.T) {
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Verbosity []bool `goptions:"-v"`
+	}
+
+	args := "-v"
+	for i := 1; i < 10; i++ {
+		options.Verbosity = []bool{}
+		fs = NewFlagSet("goptions", &options)
+		err = fs.Parse([]string{args})
+		if err != nil {
+			t.Fatalf("Parsing failed at %d: %s", i, err)
+		}
+		if len(options.Verbosity) != i {
+			t.Fatalf("Unexpected number of values. Expected %d, got %d (%#v)", i, len(options.Verbosity), options.Verbosity)
+		}
+		args += "v"
+	}
+}
+
+func TestParse_BoolArray_Short(t *testing.T) {
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Verbosity []bool `goptions:"-v"`
+	}
+
+	args = []string{}
+	for i := 1; i < 10; i++ {
+		options.Verbosity = []bool{}
+		args = append(args, "-v")
+		fs = NewFlagSet("goptions", &options)
+		err = fs.Parse(args)
+		if err != nil {
+			t.Fatalf("Parsing failed at %d: %s", i, err)
+		}
+		if len(options.Verbosity) != i {
+			t.Fatalf("Unexpected number of values. Expected %d, got %d (%#v)", i, len(options.Verbosity), options.Verbosity)
+		}
+	}
+}
+
+func TestParse_BoolArray_Long(t *testing.T) {
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Verbosity []bool `goptions:"--verbose"`
+	}
+
+	args = []string{}
+	for i := 1; i < 10; i++ {
+		options.Verbosity = []bool{}
+		args = append(args, "--verbose")
+		fs = NewFlagSet("goptions", &options)
+		err = fs.Parse(args)
+		if err != nil {
+			t.Fatalf("Parsing failed at %d: %s", i, err)
+		}
+		if len(options.Verbosity) != i {
+			t.Fatalf("Unexpected number of values. Expected %d, got %d (%#v)", i, len(options.Verbosity), options.Verbosity)
+		}
 	}
 }
 
@@ -356,4 +434,44 @@ func TestParse_File(t *testing.T) {
 	}
 	options.Output.Close()
 	os.Remove("testfile")
+}
+
+func TestParse_TCPAddr(t *testing.T) {
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Server *net.TCPAddr `goptions:"-a"`
+	}
+
+	args = []string{"-a", "192.168.0.100:8080"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err != nil {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+	if !(options.Server.IP.String() == "192.168.0.100" &&
+		options.Server.Port == 8080) {
+		t.Fatalf("Unexpected value: %#v", options)
+	}
+}
+
+func TestParse_URL(t *testing.T) {
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Server *url.URL `goptions:"-a"`
+	}
+
+	args = []string{"-a", "http://www.google.com"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err != nil {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+	if !(options.Server.Scheme == "http" &&
+		options.Server.Host == "www.google.com") {
+		t.Fatalf("Unexpected value: %#v", options.Server)
+	}
 }

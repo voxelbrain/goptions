@@ -40,6 +40,13 @@ Depending on the type of the struct member, additional options might become avai
         excl, sync, trunc and perm can be specified and correspond directly with
         the combination of the homonymous flags in the os package.
 
+    Type: *net.TCPAddr
+        The given string is interpreted as a tcp address. It is passed to
+        net.ResolvTCPAddr() with "tcp" as the network type identifier.
+
+    Type: *net/url.URL
+        The given string is parsed by net/url.Parse()
+
 If a member is a slice type, multiple definitions of the flags are possible. For each
 specification the underlying type will be used.
 
@@ -56,7 +63,7 @@ import (
 )
 
 const (
-	VERSION = "2.1.0"
+	VERSION = "2.2.0"
 )
 
 var (
