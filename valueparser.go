@@ -7,19 +7,21 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"time"
 )
 
 type valueParser func(f *Flag, val string) (reflect.Value, error)
 
 var (
 	parserMap = map[reflect.Type]valueParser{
-		reflect.TypeOf(new(bool)).Elem():         boolValueParser,
-		reflect.TypeOf(new(string)).Elem():       stringValueParser,
-		reflect.TypeOf(new(int)).Elem():          intValueParser,
-		reflect.TypeOf(new(Help)).Elem():         helpValueParser,
-		reflect.TypeOf(new(*os.File)).Elem():     fileValueParser,
-		reflect.TypeOf(new(*net.TCPAddr)).Elem(): tcpAddrValueParser,
-		reflect.TypeOf(new(*url.URL)).Elem():     urlValueParser,
+		reflect.TypeOf(new(bool)).Elem():          boolValueParser,
+		reflect.TypeOf(new(string)).Elem():        stringValueParser,
+		reflect.TypeOf(new(int)).Elem():           intValueParser,
+		reflect.TypeOf(new(Help)).Elem():          helpValueParser,
+		reflect.TypeOf(new(*os.File)).Elem():      fileValueParser,
+		reflect.TypeOf(new(*net.TCPAddr)).Elem():  tcpAddrValueParser,
+		reflect.TypeOf(new(*url.URL)).Elem():      urlValueParser,
+		reflect.TypeOf(new(time.Duration)).Elem(): durationValueParser,
 	}
 )
 
@@ -104,6 +106,11 @@ func tcpAddrValueParser(f *Flag, val string) (reflect.Value, error) {
 func urlValueParser(f *Flag, val string) (reflect.Value, error) {
 	url, err := url.Parse(val)
 	return reflect.ValueOf(url), err
+}
+
+func durationValueParser(f *Flag, val string) (reflect.Value, error) {
+	d, err := time.ParseDuration(val)
+	return reflect.ValueOf(d), err
 }
 
 func helpValueParser(f *Flag, val string) (reflect.Value, error) {
