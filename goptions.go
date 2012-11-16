@@ -47,6 +47,9 @@ Depending on the type of the struct member, additional options might become avai
     Type: *net/url.URL
         The given string is parsed by net/url.Parse()
 
+    Type: time.Duration
+        The given string is parsed by time.ParseDuration()
+
 If a member is a slice type, multiple definitions of the flags are possible. For each
 specification the underlying type will be used.
 
@@ -63,7 +66,7 @@ import (
 )
 
 const (
-	VERSION = "2.2.0"
+	VERSION = "2.3.0"
 )
 
 var (
