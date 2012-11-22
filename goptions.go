@@ -77,16 +77,8 @@ var (
 // the help if an error occurs. This should cover 90% of this library's
 // applications.
 func ParseAndFail(v interface{}) {
-	err := Parse(v)
-	if err != nil {
-		errCode := 0
-		if err != ErrHelpRequest {
-			errCode = 1
-			fmt.Printf("Error: %s\n", err)
-		}
-		PrintHelp()
-		os.Exit(errCode)
-	}
+	globalFlagSet = NewFlagSet(filepath.Base(os.Args[0]), v)
+	globalFlagSet.ParseAndFail(os.Args[1:])
 }
 
 // Parse parses the command-line flags from os.Args[1:].

@@ -212,3 +212,16 @@ func (fs *FlagSet) MutexGroups() map[string]MutexGroup {
 func (fs *FlagSet) PrintHelp(w io.Writer) {
 	fs.HelpFunc(w, fs)
 }
+
+func (fs *FLagSet) ParseAndFail(w io.Writer, args []string) {
+	err := fs.Parse(v)
+	if err != nil {
+		errCode := 0
+		if err != ErrHelpRequest {
+			errCode = 1
+			fmt.Fprintf(w, "Error: %s\n", err)
+		}
+		fs.PrintHelp(w)
+		os.Exit(errCode)
+	}
+}
