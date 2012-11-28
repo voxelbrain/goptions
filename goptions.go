@@ -60,13 +60,12 @@ see the PrintHelp() example.
 package goptions
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 )
 
 const (
-	VERSION = "2.4.0"
+	VERSION = "2.4.1"
 )
 
 var (
@@ -78,7 +77,7 @@ var (
 // applications.
 func ParseAndFail(v interface{}) {
 	globalFlagSet = NewFlagSet(filepath.Base(os.Args[0]), v)
-	globalFlagSet.ParseAndFail(os.Args[1:])
+	globalFlagSet.ParseAndFail(os.Stderr, os.Args[1:])
 }
 
 // Parse parses the command-line flags from os.Args[1:].
