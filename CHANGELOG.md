@@ -1,4 +1,10 @@
 # Changelog
+## 2.4.1
+### Bugfixes
+
+* Code was not compilable due to temporary [maintainer](http://github.com/surma) idiocy
+  (Thanks [akrennmair](http://github.com/akrennmair))
+
 ## 2.4.0
 ### New features
 

@@ -3,6 +3,7 @@ package goptions
 import (
 	"errors"
 	"fmt"
+	"os"
 	"io"
 	"reflect"
 	"strings"
@@ -213,8 +214,8 @@ func (fs *FlagSet) PrintHelp(w io.Writer) {
 	fs.HelpFunc(w, fs)
 }
 
-func (fs *FLagSet) ParseAndFail(w io.Writer, args []string) {
-	err := fs.Parse(v)
+func (fs *FlagSet) ParseAndFail(w io.Writer, args []string) {
+	err := fs.Parse(args)
 	if err != nil {
 		errCode := 0
 		if err != ErrHelpRequest {
