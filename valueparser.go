@@ -17,6 +17,8 @@ var (
 		reflect.TypeOf(new(bool)).Elem():          boolValueParser,
 		reflect.TypeOf(new(string)).Elem():        stringValueParser,
 		reflect.TypeOf(new(int)).Elem():           intValueParser,
+		reflect.TypeOf(new(int64)).Elem():         int64ValueParser,
+		reflect.TypeOf(new(int32)).Elem():         int32ValueParser,
 		reflect.TypeOf(new(Help)).Elem():          helpValueParser,
 		reflect.TypeOf(new(*os.File)).Elem():      fileValueParser,
 		reflect.TypeOf(new(*net.TCPAddr)).Elem():  tcpAddrValueParser,
@@ -71,6 +73,15 @@ func stringValueParser(f *Flag, val string) (reflect.Value, error) {
 	return reflect.ValueOf(val), nil
 }
 
+func int64ValueParser(f *Flag, val string) (reflect.Value, error) {
+	intval, err := strconv.ParseInt(val, 10, 64)
+	return reflect.ValueOf(int64(intval)), err
+}
+
+func int32ValueParser(f *Flag, val string) (reflect.Value, error) {
+	intval, err := strconv.ParseInt(val, 10, 32)
+	return reflect.ValueOf(int32(intval)), err
+}
 func intValueParser(f *Flag, val string) (reflect.Value, error) {
 	intval, err := strconv.ParseInt(val, 10, 64)
 	return reflect.ValueOf(int(intval)), err
