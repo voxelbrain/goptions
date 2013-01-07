@@ -16,6 +16,8 @@ var (
 	parserMap = map[reflect.Type]valueParser{
 		reflect.TypeOf(new(bool)).Elem():          boolValueParser,
 		reflect.TypeOf(new(string)).Elem():        stringValueParser,
+		reflect.TypeOf(new(float64)).Elem():       float64ValueParser,
+		reflect.TypeOf(new(float32)).Elem():       float32ValueParser,
 		reflect.TypeOf(new(int)).Elem():           intValueParser,
 		reflect.TypeOf(new(int64)).Elem():         int64ValueParser,
 		reflect.TypeOf(new(int32)).Elem():         int32ValueParser,
@@ -73,6 +75,16 @@ func stringValueParser(f *Flag, val string) (reflect.Value, error) {
 	return reflect.ValueOf(val), nil
 }
 
+func float64ValueParser(f *Flag, val string) (reflect.Value, error) {
+	floatval, err := strconv.ParseFloat(val, 64)
+	return reflect.ValueOf(float64(floatval)), err
+}
+
+func float32ValueParser(f *Flag, val string) (reflect.Value, error) {
+	floatval, err := strconv.ParseFloat(val, 32)
+	return reflect.ValueOf(float32(floatval)), err
+}
+
 func int64ValueParser(f *Flag, val string) (reflect.Value, error) {
 	intval, err := strconv.ParseInt(val, 10, 64)
 	return reflect.ValueOf(int64(intval)), err
@@ -82,6 +94,7 @@ func int32ValueParser(f *Flag, val string) (reflect.Value, error) {
 	intval, err := strconv.ParseInt(val, 10, 32)
 	return reflect.ValueOf(int32(intval)), err
 }
+
 func intValueParser(f *Flag, val string) (reflect.Value, error) {
 	intval, err := strconv.ParseInt(val, 10, 64)
 	return reflect.ValueOf(int(intval)), err
