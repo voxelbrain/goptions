@@ -60,7 +60,7 @@ func (f *Flag) setValue(s string) (err error) {
 		}
 		return nil
 	} else {
-		return fmt.Errorf("Unsupported flag type: %s", f.value.Type().Name())
+		return fmt.Errorf("Unsupported flag type: %s", f.value.Type())
 	}
 	panic("Invalid execution path")
 }
