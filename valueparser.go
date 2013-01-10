@@ -102,13 +102,13 @@ func intValueParser(f *Flag, val string) (reflect.Value, error) {
 
 func fileValueParser(f *Flag, val string) (reflect.Value, error) {
 	mode := 0
-	if v, ok := f.optionMeta["file_mode"].(int); ok {
-		mode = v
+	if v, ok := f.optionMeta["file_mode"]; ok {
+		mode = v.(int)
 	}
 	if val == "-" {
-		if mode&os.O_RDONLY > 0 {
+		if mode&os.O_RDONLY == os.O_RDONLY {
 			return reflect.ValueOf(os.Stdin), nil
-		} else if mode&os.O_WRONLY > 0 {
+		} else if mode&os.O_WRONLY == os.O_WRONLY {
 			return reflect.ValueOf(os.Stdout), nil
 		}
 	} else {
