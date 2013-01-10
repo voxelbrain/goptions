@@ -1,4 +1,19 @@
 # Changelog
+## 2.5.0
+### New features
+
+* Add support for `int32` and `int64`
+* Add support for `float32` and `float64`
+
+### Bugfixes
+
+* Fix a bug where the name of a unknown type would not be properly
+  printed
+* Fix checks whether to use `os.Stdin` or `os.Stdout` when "-" is given for a
+  `*os.File`
+* Fix an test example where the output to `os.Stderr` is apparently
+  not evaluated anymore.
+
 ## 2.4.1
 ### Bugfixes
 
