@@ -29,7 +29,7 @@ func ExampleFlagSet_PrintHelp() {
 	fs := NewFlagSet("goptions", &options)
 	err := fs.Parse(args)
 	if err == ErrHelpRequest {
-		fs.PrintHelp(os.Stderr)
+		fs.PrintHelp(os.Stdout)
 		return
 	} else if err != nil {
 		fmt.Printf("Failure: %s", err)

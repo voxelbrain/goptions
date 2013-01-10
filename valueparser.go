@@ -16,7 +16,11 @@ var (
 	parserMap = map[reflect.Type]valueParser{
 		reflect.TypeOf(new(bool)).Elem():          boolValueParser,
 		reflect.TypeOf(new(string)).Elem():        stringValueParser,
+		reflect.TypeOf(new(float64)).Elem():       float64ValueParser,
+		reflect.TypeOf(new(float32)).Elem():       float32ValueParser,
 		reflect.TypeOf(new(int)).Elem():           intValueParser,
+		reflect.TypeOf(new(int64)).Elem():         int64ValueParser,
+		reflect.TypeOf(new(int32)).Elem():         int32ValueParser,
 		reflect.TypeOf(new(Help)).Elem():          helpValueParser,
 		reflect.TypeOf(new(*os.File)).Elem():      fileValueParser,
 		reflect.TypeOf(new(*net.TCPAddr)).Elem():  tcpAddrValueParser,
@@ -58,7 +62,7 @@ func (f *Flag) setValue(s string) (err error) {
 		}
 		return nil
 	} else {
-		return fmt.Errorf("Unsupported flag type: %s", f.value.Type().Name())
+		return fmt.Errorf("Unsupported flag type: %s", f.value.Type())
 	}
 	panic("Invalid execution path")
 }
@@ -71,6 +75,26 @@ func stringValueParser(f *Flag, val string) (reflect.Value, error) {
 	return reflect.ValueOf(val), nil
 }
 
+func float64ValueParser(f *Flag, val string) (reflect.Value, error) {
+	floatval, err := strconv.ParseFloat(val, 64)
+	return reflect.ValueOf(float64(floatval)), err
+}
+
+func float32ValueParser(f *Flag, val string) (reflect.Value, error) {
+	floatval, err := strconv.ParseFloat(val, 32)
+	return reflect.ValueOf(float32(floatval)), err
+}
+
+func int64ValueParser(f *Flag, val string) (reflect.Value, error) {
+	intval, err := strconv.ParseInt(val, 10, 64)
+	return reflect.ValueOf(int64(intval)), err
+}
+
+func int32ValueParser(f *Flag, val string) (reflect.Value, error) {
+	intval, err := strconv.ParseInt(val, 10, 32)
+	return reflect.ValueOf(int32(intval)), err
+}
+
 func intValueParser(f *Flag, val string) (reflect.Value, error) {
 	intval, err := strconv.ParseInt(val, 10, 64)
 	return reflect.ValueOf(int(intval)), err
@@ -78,13 +102,13 @@ func intValueParser(f *Flag, val string) (reflect.Value, error) {
 
 func fileValueParser(f *Flag, val string) (reflect.Value, error) {
 	mode := 0
-	if v, ok := f.optionMeta["file_mode"].(int); ok {
-		mode = v
+	if v, ok := f.optionMeta["file_mode"]; ok {
+		mode = v.(int)
 	}
 	if val == "-" {
-		if mode&os.O_RDONLY > 0 {
+		if mode&os.O_RDONLY == os.O_RDONLY {
 			return reflect.ValueOf(os.Stdin), nil
-		} else if mode&os.O_WRONLY > 0 {
+		} else if mode&os.O_WRONLY == os.O_WRONLY {
 			return reflect.ValueOf(os.Stdout), nil
 		}
 	} else {
