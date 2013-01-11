@@ -1,4 +1,9 @@
 # Changelog
+## 2.5.1
+### Bugfixes
+
+* Make arrays of `goptions.Marshaler` work
+
 ## 2.5.0
 ### New features
 

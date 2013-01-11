@@ -29,6 +29,17 @@ var (
 	}
 )
 
+func parseMarshalValue(value reflect.Value, s string) error {
+	newval := reflect.New(value.Type()).Elem()
+	if newval.Kind() == reflect.Ptr {
+		newptrval := reflect.New(value.Type().Elem())
+		newval.Set(newptrval)
+	}
+	err := newval.Interface().(Marshaler).MarshalGoption(s)
+	value.Set(newval)
+	return err
+}
+
 func (f *Flag) setValue(s string) (err error) {
 	defer func() {
 		if x := recover(); x != nil {
@@ -36,19 +47,19 @@ func (f *Flag) setValue(s string) (err error) {
 			return
 		}
 	}()
-	if _, ok := f.value.Interface().(Marshaler); ok {
-		newval := reflect.New(f.value.Type()).Elem()
-		if newval.Kind() == reflect.Ptr {
-			newptrval := reflect.New(f.value.Type().Elem())
-			newval.Set(newptrval)
-		}
-		err := newval.Interface().(Marshaler).MarshalGoption(s)
-		f.value.Set(newval)
-		return err
+	if f.value.Type().Implements(reflect.TypeOf(new(Marshaler)).Elem()) {
+		return parseMarshalValue(f.value, s)
 	}
 	vtype := f.value.Type()
+	newval := reflect.New(vtype).Elem()
 	if f.value.Kind() == reflect.Slice {
 		vtype = f.value.Type().Elem()
+		if vtype.Implements(reflect.TypeOf(new(Marshaler)).Elem()) {
+			newval = reflect.New(vtype).Elem()
+			err := parseMarshalValue(newval, s)
+			f.value.Set(reflect.Append(f.value, newval))
+			return err
+		}
 	}
 	if parser, ok := parserMap[vtype]; ok {
 		val, err := parser(f, s)
