@@ -2,6 +2,7 @@ package goptions
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -34,8 +35,39 @@ func TestMarshaler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Parsing failed: %s", err)
 	}
-	if options.Name.FirstName != "Alexander" ||
-		options.Name.LastName != "Surma" {
+	expected := &Name{
+		FirstName: "Alexander",
+		LastName:  "Surma",
+	}
+	if !reflect.DeepEqual(options.Name, expected) {
+		t.Fatalf("Unexpected value: %#v", options)
+	}
+}
+
+func TestArrayOfMarshaler(t *testing.T) {
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		Names []*Name `goptions:"--name"`
+	}
+	args = []string{"--name", "Alexander Surma", "--name", "Yo Mama"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err != nil {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+	expected := []*Name{
+		&Name{
+			FirstName: "Alexander",
+			LastName:  "Surma",
+		},
+		&Name{
+			FirstName: "Yo",
+			LastName:  "Mama",
+		},
+	}
+	if !reflect.DeepEqual(options.Names, expected) {
 		t.Fatalf("Unexpected value: %#v", options)
 	}
 }
