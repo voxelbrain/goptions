@@ -28,23 +28,45 @@ func NewTemplatedHelpFunc(tpl string) HelpFunc {
 }
 
 const (
-	_DEFAULT_HELP = `Usage: {{.Name}} [global options] {{with .Verbs}}<verb> [verb options]{{end}}
-
-Global options:{{range .Flags}}
-	{{with .Short}}-{{.}},{{end}}	{{with .Long}}--{{.}}{{end}}	{{.Description}}{{with .DefaultValue}} (default: {{.}}){{end}}{{if .Obligatory}} (*){{end}}{{end}}
-
-{{with .Verbs}}Verbs:{{range .}}
-	{{.Name}}:{{range .Flags}}
-		{{with .Short}}-{{.}},{{end}}	{{with .Long}}--{{.}}{{end}}	{{.Description}}{{with .DefaultValue}} (default: {{.}}){{end}}{{if .Obligatory}} (*){{end}}{{end}}{{end}}{{end}}
-
-`
+	_DEFAULT_HELP = "\xffUsage: {{.Name}} [global options] {{with .Verbs}}<verb> [verb options]{{end}}\n" +
+		"\n" +
+		"Global options:\xff" +
+		"{{range .Flags}}" +
+		"\n\t" +
+		"\t{{with .Short}}" + "-{{.}}," + "{{end}}" +
+		"\t{{with .Long}}" + "--{{.}}" + "{{end}}" +
+		"\t{{.Description}}" +
+		"{{with .DefaultValue}}" +
+		" (default: {{.}})" +
+		"{{end}}" +
+		"{{if .Obligatory}}" +
+		" (*)" +
+		"{{end}}" +
+		"{{end}}" +
+		"\xff\n\n{{with .Verbs}}Verbs:\xff" +
+		"{{range .}}" +
+		"\xff\n    {{.Name}}:\xff" +
+		"{{range .Flags}}" +
+		"\n\t" +
+		"\t{{with .Short}}" + "-{{.}}," + "{{end}}" +
+		"\t{{with .Long}}" + "--{{.}}" + "{{end}}" +
+		"\t{{.Description}}" +
+		"{{with .DefaultValue}}" +
+		" (default: {{.}})" +
+		"{{end}}" +
+		"{{if .Obligatory}}" +
+		" (*)" +
+		"{{end}}" +
+		"{{end}}" +
+		"{{end}}" +
+		"{{end}}" +
+		"\n"
 )
 
 // DefaultHelpFunc is a HelpFunc which renders the default help template and pipes
 // the output through a text/tabwriter.Writer before flushing it to the output.
 func DefaultHelpFunc(w io.Writer, fs *FlagSet) {
-	tw := &tabwriter.Writer{}
-	tw.Init(w, 4, 4, 1, ' ', 0)
+	tw := tabwriter.NewWriter(w, 4, 4, 1, ' ', tabwriter.StripEscape|tabwriter.DiscardEmptyColumns)
 	NewTemplatedHelpFunc(_DEFAULT_HELP)(tw, fs)
 	tw.Flush()
 }
