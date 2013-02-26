@@ -43,18 +43,18 @@ $ go run examples/readme_example.go --help
 Usage: a.out [global options] <verb> [verb options]
 
 Global options:
-    -s, --server   Server to connect to (*)
-    -p, --password Don't prompt for password
-    -t, --timeout  Connection timeout in seconds (default: 10s)
-    -h, --help     Show this help
+        -s, --server   Server to connect to (*)
+        -p, --password Don't prompt for password
+        -t, --timeout  Connection timeout in seconds (default: 10s)
+        -h, --help     Show this help
 
 Verbs:
     delete:
-        -n, --name  Name of the entity to be deleted (*)
-        -f, --force Force removal
+        -n, --name     Name of the entity to be deleted (*)
+        -f, --force    Force removal
     execute:
-            --command Command to exectute (*)
-            --script  Script to exectute
+            --command  Command to exectute (*)
+            --script   Script to exectute
 ```
 
 ---
