@@ -1,4 +1,10 @@
 # Changelog
+## 2.5.2
+### Bugfixes
+
+* Bring `examples/readme_example.go` and `README.md` up to date
+* Rewrite formatter
+
 ## 2.5.1
 ### Bugfixes
 
