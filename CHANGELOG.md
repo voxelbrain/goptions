@@ -1,4 +1,9 @@
 # Changelog
+## 2.5.4
+### Bugfixes
+
+* Fix typo in documentation
+
 ## 2.5.3
 ### Bugfixes
 
