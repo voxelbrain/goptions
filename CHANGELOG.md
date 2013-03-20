@@ -1,4 +1,10 @@
 # Changelog
+## 2.5.3
+### Bugfixes
+
+* Remove placeholders from LICENSE
+* Add CONTROBUTORS
+
 ## 2.5.2
 ### Bugfixes
 
