@@ -4,6 +4,8 @@ Key targets were the support for both long and short flag versions, mutually
 exclusive flags, and verbs. Flags and their corresponding variables are defined
 by the tags in a (possibly anonymous) struct.
 
+![](https://circleci.com/gh/voxelbrain/goptions.png?circle-token=27cd98362d475cfa8c586565b659b2204733f25c)
+
 # Example
 
 ```Go
