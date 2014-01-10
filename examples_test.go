@@ -53,3 +53,49 @@ func ExampleFlagSet_PrintHelp() {
 	//             --command  Command to exectute (*)
 	//             --script   Script to exectute
 }
+
+func ExampleVerbs() {
+	options := struct {
+		ImportantFlag string        `goptions:"-f, --flag, description='Important flag, obligatory'"`
+		Password      string        `goptions:"-p, --password, description='Don\\'t prompt for password'"`
+		Timeout       time.Duration `goptions:"-t, --timeout, description='Connection timeout in seconds'"`
+		Help          Help          `goptions:"-h, --help, description='Show this help'"`
+
+		Verb    Verbs
+		Execute struct {
+			Command string   `goptions:"--command, mutexgroup='input', description='Command to exectute', obligatory"`
+			Script  *os.File `goptions:"--script, mutexgroup='input', description='Script to exectute', rdonly"`
+		} `goptions:"execute"`
+		Delete struct {
+			Path  string `goptions:"-n, --name, obligatory, description='Name of the entity to be deleted'"`
+			Force bool   `goptions:"-f, --force, description='Force removal'"`
+		} `goptions:"delete"`
+	}{ // Default values goes here
+		Timeout: 10 * time.Second,
+	}
+
+	args := []string{"delete", "-n", "/usr/bin"}
+	fs := NewFlagSet("goptions", &options)
+	_ = fs.Parse(args)
+	// Error handling omitted
+	fmt.Printf("Selected verb: %s", options.Verb)
+
+	// Output:
+	// Selected verb: delete
+}
+
+func ExampleRemainder() {
+	options := struct {
+		Username  string `goptions:"-u, --user, obligatory, description='Name of the user'"`
+		Remainder Remainder
+	}{}
+
+	args := []string{"-u", "surma", "some", "more", "args"}
+	fs := NewFlagSet("goptions", &options)
+	_ = fs.Parse(args)
+	// Error handling omitted
+	fmt.Printf("Remainder: %#v", options.Remainder)
+
+	// Output:
+	// Remainder: goptions.Remainder{"some", "more", "args"}
+}
