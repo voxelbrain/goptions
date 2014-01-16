@@ -1,4 +1,13 @@
 # Changelog
+## 2.5.6
+### Bug fixes
+
+* Unexported fields are now ignored
+
+### Minor changes
+
+* Examples for Verbs and Remainder in documentation
+
 ## 2.5.4
 ### Bugfixes
 

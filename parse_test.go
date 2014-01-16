@@ -411,3 +411,22 @@ func TestParse_BoolArray_Long(t *testing.T) {
 		}
 	}
 }
+
+func TestParse_UnexportedVerbs(t *testing.T) {
+	var options struct {
+		Verbs
+		A struct {
+			A1 string `goptions:"--a1"`
+			a2 string `goptions:"--a2"`
+		} `goptions:"A"`
+	}
+	args := []string{"A", "--a1", "x"}
+	fs := NewFlagSet("goptions", &options)
+	err := fs.Parse(args)
+	if err != nil {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+	if options.A.A1 != "x" || options.A.a2 != "" {
+		t.Fatalf("Unexpected values in struct: %#v", options)
+	}
+}
