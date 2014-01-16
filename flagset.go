@@ -64,6 +64,11 @@ func newFlagset(name string, structValue reflect.Value, parent *FlagSet) *FlagSe
 	var i int
 	// Parse Option fields
 	for i = 0; i < structValue.Type().NumField(); i++ {
+		// Skip unexported fields
+		if StartsWithLowercase(structValue.Type().Field(i).Name) {
+			continue
+		}
+
 		fieldValue := structValue.Field(i)
 		tag := structValue.Type().Field(i).Tag.Get("goptions")
 		flag, err := parseStructField(fieldValue, tag)
@@ -225,4 +230,11 @@ func (fs *FlagSet) ParseAndFail(w io.Writer, args []string) {
 		fs.PrintHelp(w)
 		os.Exit(errCode)
 	}
+}
+
+func StartsWithLowercase(s string) bool {
+	if len(s) <= 0 {
+		return false
+	}
+	return strings.ToLower(s)[0] == s[0]
 }
