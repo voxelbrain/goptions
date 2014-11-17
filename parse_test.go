@@ -430,3 +430,23 @@ func TestParse_UnexportedVerbs(t *testing.T) {
 		t.Fatalf("Unexpected values in struct: %#v", options)
 	}
 }
+
+func TestParse_DashAsRemainder(t *testing.T) {
+	var options struct {
+		SomeFlag bool `goptions:"-b"`
+		Remainder
+	}
+	args := []string{"-b", "-"}
+	fs := NewFlagSet("goptions", &options)
+	err := fs.Parse(args)
+	if err != nil {
+		t.Fatalf("Parsing failed: %s", err)
+	}
+	if len(options.Remainder) != 1 {
+		t.Fatalf("Unexpected size of remainder: %d (%#v)", len(options.Remainder), options.Remainder)
+	}
+	if options.Remainder[0] != "-" {
+		t.Fatalf("Unexpected remainder: %#v", options.Remainder)
+	}
+
+}
