@@ -69,7 +69,7 @@ import (
 )
 
 const (
-	VERSION = "2.5.8"
+	VERSION = "2.5.9"
 )
 
 var (
