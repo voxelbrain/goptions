@@ -54,11 +54,11 @@ func (f *Flag) IsMulti() bool {
 }
 
 func isShort(arg string) bool {
-	return strings.HasPrefix(arg, "-") && !strings.HasPrefix(arg, "--")
+	return strings.HasPrefix(arg, "-") && !strings.HasPrefix(arg, "--") && len(arg) >= 2
 }
 
 func isLong(arg string) bool {
-	return strings.HasPrefix(arg, "--")
+	return strings.HasPrefix(arg, "--") && len(arg) >= 3
 }
 
 func (f *Flag) Handles(arg string) bool {
