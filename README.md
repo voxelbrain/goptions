@@ -19,7 +19,7 @@ import (
 
 func main() {
 	options := struct {
-		Server   string        `goptions:"-s, --server, obligatory, description='Server to connect to'"`
+		Servers  []string      `goptions:"-s, --server, obligatory, description='Servers to connect to'"`
 		Password string        `goptions:"-p, --password, description='Don\\'t prompt for password'"`
 		Timeout  time.Duration `goptions:"-t, --timeout, description='Connection timeout in seconds'"`
 		Help     goptions.Help `goptions:"-h, --help, description='Show this help'"`
@@ -45,7 +45,7 @@ $ go run examples/readme_example.go --help
 Usage: a.out [global options] <verb> [verb options]
 
 Global options:
-        -s, --server   Server to connect to (*)
+        -s, --server   Servers to connect to (*)
         -p, --password Don't prompt for password
         -t, --timeout  Connection timeout in seconds (default: 10s)
         -h, --help     Show this help
@@ -60,4 +60,4 @@ Verbs:
 ```
 
 ---
-Version 2.5.8
+Version 2.5.9
