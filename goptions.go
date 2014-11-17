@@ -53,6 +53,10 @@ Depending on the type of the struct member, additional options might become avai
 If a member is a slice type, multiple definitions of the flags are possible. For each
 specification the underlying type will be used.
 
+    var options struct {
+        Servers []string `goptions:"-s, --server, description='Servers to connect to'"`
+    }{}
+
 goptions also has support for verbs. Each verb accepts its own set of flags which
 take exactly the same tag format as global options. For an usage example of verbs
 see the PrintHelp() example.
