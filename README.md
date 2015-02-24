@@ -8,7 +8,7 @@ by the tags in a (possibly anonymous) struct.
 
 # Example
 
-```Go
+```go
 package main
 
 import (
@@ -58,6 +58,57 @@ Verbs:
             --command  Command to exectute (*)
             --script   Script to exectute
 ```
+
+# Quick Reference
+
+## goptions
+
+Each field of your struct can be tagged with a `goptions`
+
+```go
+    FieldName type `goptions:"-S, --long, options..."`
+```
+
+Where the short options (`-S`) are declared with a single dash and
+long options (`--long`) are declared with two dashes. Either or
+both may be declared.
+
+After the short/long option names are one or more of the following:
+
+### Global Options
+
+* description='...'
+* obligatory
+* mutexgroup='GROUP_NAME'
+
+### os.File specific
+
+* create
+* append
+* rdonly
+* wronly
+* rdwr
+* excl
+* sync
+* trunc
+* perm=0777
+
+## Supported Types
+
+* bool
+* string
+* float64
+* float32
+* int
+* int64
+* int32
+* goptions.Help
+* *os.File
+* *net.TCPAddr
+* *url.URL
+* time.Duration
+
+
 
 ---
 Version 2.5.9
