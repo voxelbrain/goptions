@@ -3,6 +3,7 @@ package goptions
 import (
 	"errors"
 	"fmt"
+	"os"
 	"io"
 	"os"
 	"reflect"
