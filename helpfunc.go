@@ -10,7 +10,7 @@ import (
 // HelpFunc is the signature of a function responsible for printing the help.
 type HelpFunc func(w io.Writer, fs *FlagSet)
 
-// Generates a new HelpFunc taking a `text/template.Template`-formatted
+// NewTemplatedHelpFunc Generates a new HelpFunc taking a `text/template.Template`-formatted
 // string as an argument. The resulting template will be executed with the FlagSet
 // as its data.
 func NewTemplatedHelpFunc(tpl string) HelpFunc {
@@ -28,7 +28,8 @@ func NewTemplatedHelpFunc(tpl string) HelpFunc {
 }
 
 const (
-	_DEFAULT_HELP = "\xffUsage: {{.Name}} [global options] {{with .Verbs}}<verb> [verb options]{{end}}\n" +
+	// DefaultHelp is default help message template.
+	DefaultHelp = "\xffUsage: {{.Name}} [global options] {{with .Verbs}}<verb> [verb options]{{end}}\n" +
 		"\n" +
 		"Global options:\xff" +
 		"{{range .Flags}}" +
@@ -67,6 +68,6 @@ const (
 // the output through a text/tabwriter.Writer before flushing it to the output.
 func DefaultHelpFunc(w io.Writer, fs *FlagSet) {
 	tw := tabwriter.NewWriter(w, 4, 4, 1, ' ', tabwriter.StripEscape|tabwriter.DiscardEmptyColumns)
-	NewTemplatedHelpFunc(_DEFAULT_HELP)(tw, fs)
+	NewTemplatedHelpFunc(DefaultHelp)(tw, fs)
 	tw.Flush()
 }

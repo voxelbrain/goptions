@@ -106,6 +106,7 @@ func newFlagset(name string, structValue reflect.Value, parent *FlagSet) *FlagSe
 }
 
 var (
+	//ErrHelpRequest returned when help is requested.
 	ErrHelpRequest = errors.New("Request for Help")
 )
 
@@ -187,6 +188,7 @@ func (fs *FlagSet) hasShortFlag(fname string) bool {
 	return ok
 }
 
+// FlagByName get a flag by name from the flagset.
 func (fs *FlagSet) FlagByName(fname string) *Flag {
 	if isShort(fname) && fs.hasShortFlag(fname[1:2]) {
 		return fs.shortMap[fname[1:2]]
@@ -214,11 +216,12 @@ func (fs *FlagSet) MutexGroups() map[string]MutexGroup {
 	return r
 }
 
-// Prints the FlagSet's help to the given writer.
+// PrintHelp Prints the FlagSet's help to the given writer.
 func (fs *FlagSet) PrintHelp(w io.Writer) {
 	fs.HelpFunc(w, fs)
 }
 
+// ParseAndFail parses the arguments and panics if there is an error.
 func (fs *FlagSet) ParseAndFail(w io.Writer, args []string) {
 	err := fs.Parse(args)
 	if err != nil {
@@ -232,6 +235,7 @@ func (fs *FlagSet) ParseAndFail(w io.Writer, args []string) {
 	}
 }
 
+// StartsWithLowercase returns true if string starts with a lowercase.
 func StartsWithLowercase(s string) bool {
 	if len(s) <= 0 {
 		return false

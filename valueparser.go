@@ -75,7 +75,6 @@ func (f *Flag) setValue(s string) (err error) {
 	} else {
 		return fmt.Errorf("Unsupported flag type: %s", f.value.Type())
 	}
-	panic("Invalid execution path")
 }
 
 func boolValueParser(f *Flag, val string) (reflect.Value, error) {
