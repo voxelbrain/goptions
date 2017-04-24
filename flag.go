@@ -19,7 +19,7 @@ type Flag struct {
 	DefaultValue interface{}
 }
 
-// Return the name of the flag preceding the right amount of dashes.
+// Name Return the name of the flag preceding the right amount of dashes.
 // The long name is preferred. If no name has been specified, "<unspecified>"
 // will be returned.
 func (f *Flag) Name() string {
@@ -61,12 +61,14 @@ func isLong(arg string) bool {
 	return strings.HasPrefix(arg, "--") && len(arg) >= 3
 }
 
+// Handles returns if the flag can handle the string.
 func (f *Flag) Handles(arg string) bool {
 	return (isShort(arg) && arg[1:2] == f.Short) ||
 		(isLong(arg) && arg[2:] == f.Long)
 
 }
 
+// Parse Gets the value for this flag from the args if it is in the slice.
 func (f *Flag) Parse(args []string) ([]string, error) {
 	param, value := args[0], ""
 	if f.NeedsExtraValue() &&
