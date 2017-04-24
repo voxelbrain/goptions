@@ -31,9 +31,36 @@ func ParseAndExecute(v Executer) error {
 	return exe.Execute(args)
 }
 
+// ParseAndExecuteCustomArgs ...
+func ParseAndExecuteCustomArgs(v Executer, args []string) error {
+	fs := NewFlagSet(filepath.Base(args[0]), v)
+	if err := fs.Parse(args[1:]); err != nil {
+		return err
+	}
+	exe, args, err := getExecuterArgs(v)
+	if err != nil {
+		return err
+	}
+	return exe.Execute(args)
+}
+
 // ParseExecuteAndFail ...
 func ParseExecuteAndFail(v Executer) {
 	err := ParseAndExecute(v)
+	if err != nil {
+		errCode := 0
+		if err != ErrHelpRequest {
+			errCode = 1
+			fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		}
+		PrintHelp()
+		os.Exit(errCode)
+	}
+}
+
+// ParseExecuteAndFailCustomArgs ...
+func ParseExecuteAndFailCustomArgs(v Executer, args []string) {
+	err := ParseAndExecuteCustomArgs(v, args)
 	if err != nil {
 		errCode := 0
 		if err != ErrHelpRequest {
