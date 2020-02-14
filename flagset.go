@@ -61,39 +61,61 @@ func newFlagset(name string, structValue reflect.Value, parent *FlagSet) *FlagSe
 		r.remainderFlag = parent.remainderFlag
 	}
 
+	r.parseStruct(structValue, &once)
+
+	r.createMaps()
+	return r
+}
+
+func (r *FlagSet) parseStruct(structValue reflect.Value, once *sync.Once) {
 	var i int
+	l := structValue.Type().NumField()
 	// Parse Option fields
-	for i = 0; i < structValue.Type().NumField(); i++ {
+	for i = 0; i < l; i++ {
+		fieldValue := structValue.Field(i)
 		// Skip unexported fields
 		if StartsWithLowercase(structValue.Type().Field(i).Name) {
+			// check if it is an embedded type
+			if structValue.Type().Field(i).Anonymous {
+				r.parseStruct(fieldValue, once)
+			}
 			continue
 		}
 
-		fieldValue := structValue.Field(i)
 		tag := structValue.Type().Field(i).Tag.Get("goptions")
 		flag, err := parseStructField(fieldValue, tag)
-
 		if err != nil {
 			panic(fmt.Sprintf("Invalid struct field: %s", err))
 		}
-		if fieldValue.Type().Name() == "Verbs" {
+
+		matched := true
+		switch fieldValue.Type().Name() {
+		default:
+			matched = false
+		case "Verbs":
 			r.verbFlag = flag
-			break
-		}
-		if fieldValue.Type().Name() == "Help" {
+			goto ParseVerb
+		case "Help":
 			r.helpFlag = flag
-		}
-		if fieldValue.Type().Name() == "Remainder" && r.remainderFlag == nil {
-			r.remainderFlag = flag
+		case "Remainder":
+			if r.remainderFlag == nil {
+				r.remainderFlag = flag
+			}
 		}
 
 		if len(tag) != 0 {
 			r.Flags = append(r.Flags, flag)
+		} else if !matched {
+			// check if it is an embedded type
+			if structValue.Type().Field(i).Anonymous {
+				r.parseStruct(fieldValue, once)
+			}
 		}
 	}
 
+ParseVerb:
 	// Parse verb fields
-	for i++; i < structValue.Type().NumField(); i++ {
+	for i++; i < l; i++ {
 		once.Do(func() {
 			r.Verbs = make(map[string]*FlagSet)
 		})
@@ -101,8 +123,6 @@ func newFlagset(name string, structValue reflect.Value, parent *FlagSet) *FlagSe
 		tag := structValue.Type().Field(i).Tag.Get("goptions")
 		r.Verbs[tag] = newFlagset(tag, fieldValue, r)
 	}
-	r.createMaps()
-	return r
 }
 
 var (

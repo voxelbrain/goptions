@@ -450,3 +450,31 @@ func TestParse_DashAsRemainder(t *testing.T) {
 	}
 
 }
+
+func TestParse_Embedded(t *testing.T) {
+	type innerT struct {
+		Name string `goptions:"--name, -n"`
+	}
+
+	var args []string
+	var err error
+	var fs *FlagSet
+	var options struct {
+		innerT
+		Job string `goptions:"--job, -j"`
+	}
+	expectedName, expectedJob := "SomeName", "Painter"
+
+	args = []string{"--name", "SomeName", "--job", "Painter"}
+	fs = NewFlagSet("goptions", &options)
+	err = fs.Parse(args)
+	if err != nil {
+		t.Fatalf("Flag parsing failed: %s", err)
+	}
+	if options.Name != expectedName {
+		t.Fatalf("Expected %s for options.Name, got %s", expectedName, options.Name)
+	}
+	if options.Job != expectedJob {
+		t.Fatalf("Expected %s for options.Job, got %s", expectedJob, options.Job)
+	}
+}
